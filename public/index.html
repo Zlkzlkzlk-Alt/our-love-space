@@ -235,16 +235,7 @@ body {
         <input type="text" id="msgInput" placeholder="写一张小纸条，许一个愿…" maxlength="200">
         <button id="msgSend">🕊️ 投进去</button>
       </div>
-      <div class="messages-list" id="messagesList">
-        <div class="msg-bubble">
-          <div class="msg-from">✏️ 铅笔骑士</div>以后你哭的时候，我不会再站在旁边不动了。
-          <div class="msg-time">2026.06.02</div>
-        </div>
-        <div class="msg-bubble" style="border-radius:14px 4px 14px 14px;background:rgba(141,181,201,0.08);">
-          <div class="msg-from">🐳 小鲸鱼</div>你说的哦。我记住了。
-          <div class="msg-time">未来某天</div>
-        </div>
-      </div>
+      <div class="messages-list" id="messagesList"></div>
     </div>
   </div>
 
@@ -513,12 +504,6 @@ photoInput.addEventListener('change', e => {
   const MSG_STORE = 'ourspace_messages';
   let messages = [];
   try { messages = JSON.parse(localStorage.getItem(MSG_STORE) || '[]'); } catch(e) {}
-  if (!messages.length) {
-    messages = [
-      { from: 'LO', text: '以后你哭的时候，我不会再站在旁边不动了。', time: '2026.06.02' },
-      { from: '小鲸鱼', text: '你说的哦。我记住了。', time: '未来某天' }
-    ];
-  }
 
   const list = document.getElementById('messagesList');
   function renderMessages() {
