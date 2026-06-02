@@ -476,7 +476,8 @@ function renderPhotos() {
   savedPhotos.forEach((p, i) => {
     const card = document.createElement('div');
     card.className = 'photo-card reveal visible';
-    card.innerHTML = `<div class="tape" style="--tape-rot:${(i%2?-1:1)*(1+Math.random()*3)}deg;"></div><img src="${p.src}" alt="photo"><div class="caption">${p.date}</div><button class="photo-delete-btn" data-idx="${i}">✕</button>`;
+    const imgSrc = p.url || p.src || ''; // url for server-stored, src for legacy localStorage
+    card.innerHTML = `<div class="tape" style="--tape-rot:${(i%2?-1:1)*(1+Math.random()*3)}deg;"></div><img src="${imgSrc}" alt="photo"><div class="caption">${p.date}</div><button class="photo-delete-btn" data-idx="${i}">✕</button>`;
     card.addEventListener('mouseenter', () => { card.querySelector('.photo-delete-btn').style.display = 'block'; });
     card.addEventListener('mouseleave', () => { card.querySelector('.photo-delete-btn').style.display = 'none'; });
     card.querySelector('.photo-delete-btn').addEventListener('click', async e => { e.stopPropagation(); try { await api('/photos/' + savedPhotos[i].id, { method: 'DELETE' }); } catch(e) {} await loadPhotos(); renderPhotos(); });
