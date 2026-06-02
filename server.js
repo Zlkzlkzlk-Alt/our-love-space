@@ -27,6 +27,9 @@ function auth(req, res, next) {
   next();
 }
 
+// ── Ensure data directory exists ──
+fs.mkdirSync(DATA_DIR, { recursive: true });
+
 // ── JSON store helpers ──
 function readData(filename) {
   const file = path.join(DATA_DIR, filename);
