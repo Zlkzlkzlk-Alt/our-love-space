@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>铅笔骑士 & 小鲸鱼 · 我们的空间</title>
+<style>
+:root {
+  --ocean-deep: #1a3a4a; --ocean-mid: #2c5f7c; --ocean-light: #8db5c9;
+  --gold: #c8a45c; --gold-light: #e8d5a3; --cream: #faf6f0;
+  --ink: #2c2416; --ink-light: #6b5e4a; --paper: #f5efe0;
+  --rose: #c17b7b; --pencil: #4a4235;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html {
+  background: url('/img/ocean-bg.png') center/cover no-repeat fixed;
+}
+body {
+  font-family: 'KaiTi','STKaiti','楷体',serif;
+  font-size: 17px;
+  background: transparent;
+  color: var(--ink); overflow-x: hidden;
+}
+.container { max-width:720px; margin:0 auto; padding:0 24px 80px; position:relative; z-index:1; }
+
+/* ── HERO ── */
+.hero { text-align:center; padding:60px 0 32px; }
+.hero-icon { font-size:44px; animation:float 3s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.hero-names { font-family:'Noto Serif SC','SimSun',serif; font-size:clamp(1.8rem,5vw,2.4rem); font-weight:bold; color:var(--ocean-deep); margin:12px 0 4px; letter-spacing:0.06em; }
+.hero-names .amp { color:var(--gold); font-style:italic; margin:0 4px; }
+.hero-sub { font-size:0.9rem; color:var(--ink-light); margin-bottom:16px; }
+.day-counter { display:inline-flex; align-items:baseline; gap:6px; background:rgba(255,255,255,0.6); backdrop-filter:blur(8px); border:1.5px solid rgba(200,164,92,0.25); border-radius:40px; padding:10px 28px; margin-top:4px; box-shadow:0 2px 16px rgba(26,58,74,0.06); }
+.day-number { font-family:Georgia,serif; font-size:2.2rem; font-weight:bold; color:var(--gold); line-height:1; }
+.day-label { font-size:0.95rem; color:var(--ink-light); }
+.day-since { display:block; font-size:0.92rem; color:var(--ink-light); margin-top:4px; }
+
+/* ── TABS ── */
+.tab-nav { display:flex; justify-content:center; gap:4px; padding:16px 0 24px; flex-wrap:wrap; }
+.tab-btn { padding:10px 24px; border:1.5px solid rgba(200,164,92,0.25); border-radius:24px; background:rgba(255,255,255,0.85); backdrop-filter:blur(6px); cursor:pointer; font-family:inherit; font-size:0.9rem; color:var(--ink-light); transition:all 0.3s; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+.tab-btn:hover { border-color:var(--gold); color:var(--gold); box-shadow:0 2px 12px rgba(200,164,92,0.15); transform:translateY(-1px); }
+.tab-btn.active { background:var(--ocean-deep); color:var(--cream); border-color:var(--ocean-deep); box-shadow:0 4px 16px rgba(26,58,74,0.25); }
+
+/* ── PANELS ── */
+.panel { display:none; }
+.panel.active { display:block; }
+
+/* ── DIVIDER ── */
+.divider { display:flex; align-items:center; justify-content:center; margin:32px 0; gap:10px; }
+.divider-line { height:1px; flex:1; background:repeating-linear-gradient(to right,var(--gold-light) 0,var(--gold-light) 4px,transparent 4px,transparent 8px); }
+.divider-icon { font-size:1.2rem; opacity:0.6; }
+
+/* ── SECTION TITLE ── */
+.sec-title { font-family:'Noto Serif SC','SimSun',serif; font-size:1.3rem; color:var(--ocean-deep); text-align:center; margin-bottom:20px; }
+.sec-title::after { content:''; display:block; width:32px; height:2px; background:var(--gold); margin:8px auto 0; border-radius:1px; }
+
+/* ── TIMELINE ── */
+.timeline { position:relative; padding-left:32px; }
+.timeline::before { content:''; position:absolute; left:11px; top:0; bottom:0; width:2px; background:linear-gradient(to bottom,transparent 0%,var(--ocean-light) 8%,var(--ocean-light) 92%,transparent 100%); opacity:0.5; }
+.timeline-item { position:relative; margin-bottom:28px; }
+.timeline-dot { position:absolute; left:-27px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--gold); border:2px solid var(--cream); box-shadow:0 0 0 2px var(--gold-light); z-index:1; }
+.timeline-item:last-child .timeline-dot { background:var(--ocean-deep); box-shadow:0 0 0 2px var(--ocean-light); width:14px; height:14px; left:-28px; top:3px; }
+.timeline-date { font-size:0.85rem; color:var(--gold); font-weight:bold; letter-spacing:0.04em; margin-bottom:2px; }
+.timeline-title { font-family:'Noto Serif SC','SimSun',serif; font-size:1rem; color:var(--ocean-deep); margin-bottom:4px; }
+.timeline-desc { font-size:0.95rem; color:var(--ink-light); line-height:1.7; }
+.timeline-actions { position:absolute; right:0; top:0; display:flex; gap:6px; opacity:0; transition:opacity 0.2s; }
+.timeline-item:hover .timeline-actions { opacity:1; }
+.timeline-btn { width:28px; height:28px; border-radius:50%; border:1px solid rgba(0,0,0,0.1); background:white; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.timeline-btn:hover { transform:scale(1.15); }
+.timeline-btn.del:hover { background:#fce4e4; border-color:var(--rose); color:var(--rose); }
+.timeline-btn.edit:hover { background:#e4ecf4; border-color:var(--ocean-mid); color:var(--ocean-mid); }
+.timeline-empty { text-align:center; color:var(--ink-light); font-size:0.88rem; padding:24px 0; opacity:0.6; }
+.add-story-btn { display:inline-flex; align-items:center; gap:6px; margin-top:12px; margin-left:32px; padding:10px 20px; background:rgba(255,255,255,0.7); backdrop-filter:blur(4px); border:1.5px dashed rgba(200,164,92,0.4); border-radius:24px; cursor:pointer; font-family:inherit; font-size:0.95rem; color:var(--gold); transition:all 0.3s; box-shadow:0 1px 4px rgba(0,0,0,0.03); }
+.add-story-btn:hover { border-color:var(--gold); background:rgba(200,164,92,0.08); box-shadow:0 2px 12px rgba(200,164,92,0.12); transform:translateY(-1px); }
+
+/* ── STORY FORM OVERLAY ── */
+.story-form-overlay { position:fixed; inset:0; background:rgba(26,58,74,0.3); backdrop-filter:blur(3px); z-index:10000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.story-form-card { background:var(--cream); border-radius:16px; padding:28px 24px 20px; width:90%; max-width:440px; box-shadow:0 20px 60px rgba(0,0,0,0.15); border:1px solid rgba(200,164,92,0.15); }
+.story-form-card h3 { font-family:'Noto Serif SC',serif; color:var(--ocean-deep); margin-bottom:16px; font-size:1.1rem; text-align:center; }
+.story-form-card label { display:block; font-size:0.88rem; color:var(--ink-light); margin-bottom:4px; margin-top:10px; }
+.story-form-card input,.story-form-card textarea { width:100%; padding:10px 14px; border:1px solid rgba(200,164,92,0.25); border-radius:10px; font-family:inherit; font-size:0.95rem; background:rgba(255,255,255,0.6); color:var(--ink); outline:none; resize:vertical; transition:border-color 0.3s; }
+.story-form-card input:focus,.story-form-card textarea:focus { border-color:var(--gold); }
+.story-form-card textarea { min-height:70px; }
+.story-form-btns { display:flex; gap:10px; margin-top:16px; justify-content:flex-end; }
+.story-form-btns button { padding:10px 24px; border-radius:20px; cursor:pointer; font-family:inherit; font-size:0.95rem; transition:all 0.2s; }
+.btn-cancel { background:rgba(255,255,255,0.6); border:1.5px solid rgba(0,0,0,0.1); color:var(--ink-light); }
+.btn-cancel:hover { background:rgba(0,0,0,0.04); border-color:rgba(0,0,0,0.18); }
+.btn-save { background:linear-gradient(135deg,var(--gold),#b8943f); border:none; color:white; box-shadow:0 2px 8px rgba(200,164,92,0.2); }
+.btn-save:hover { background:linear-gradient(135deg,var(--ocean-deep),var(--ocean-mid)); box-shadow:0 4px 14px rgba(26,58,74,0.3); }
+
+/* ── PHOTO WALL ── */
+.photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+.photo-card { background:white; padding:10px 10px 30px; box-shadow:2px 2px 8px rgba(0,0,0,0.06),4px 4px 16px rgba(0,0,0,0.03); transform:rotate(var(--rot,0deg)); transition:transform 0.3s,box-shadow 0.3s; border-radius:1px; position:relative; }
+.photo-card:nth-child(odd){--rot:-1.5deg}.photo-card:nth-child(even){--rot:2deg}.photo-card:nth-child(3n){--rot:-0.8deg}
+.photo-card:hover { transform:rotate(0deg) scale(1.04); box-shadow:4px 8px 24px rgba(0,0,0,0.1); z-index:2; }
+.photo-card img { width:100%; aspect-ratio:1; object-fit:cover; display:block; border-radius:1px; }
+.photo-card .caption { position:absolute; bottom:10px; left:10px; right:10px; font-size:0.88rem; color:var(--ink-light); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.photo-card .tape { position:absolute; top:-10px; left:50%; transform:translateX(-50%) rotate(var(--tape-rot,3deg)); width:50px; height:18px; background:rgba(255,255,240,0.7); border-radius:1px; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+.photo-placeholder { aspect-ratio:1; background:linear-gradient(135deg,var(--paper) 0%,#e8dcc8 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:var(--gold-light); border-radius:1px; }
+.photo-upload-hint { text-align:center; font-size:0.88rem; color:var(--ink-light); margin-top:16px; opacity:0.6; }
+.photo-delete-btn { position:absolute; top:-8px; right:-8px; width:22px; height:22px; border-radius:50%; border:none; background:white; box-shadow:0 1px 4px rgba(0,0,0,0.15); cursor:pointer; font-size:0.8rem; color:var(--rose); z-index:3; display:none; }
+
+/* ── WISHING WELL ── */
+.wishing-well { background:linear-gradient(180deg,rgba(26,58,74,0.03) 0%,rgba(200,164,92,0.04) 100%); border-radius:16px; padding:28px 22px; border:1px dashed rgba(200,164,92,0.2); }
+.msg-form { display:flex; gap:10px; margin-bottom:20px; }
+.msg-form input { flex:1; padding:12px 16px; border:1px solid rgba(200,164,92,0.3); border-radius:24px; background:rgba(255,255,255,0.6); font-family:inherit; font-size:0.88rem; color:var(--ink); outline:none; transition:border-color 0.3s; }
+.msg-form input:focus { border-color:var(--gold); }
+.msg-form button { padding:12px 22px; background:linear-gradient(135deg,var(--gold),#b8943f); color:white; border:none; border-radius:24px; cursor:pointer; font-family:inherit; font-size:0.88rem; white-space:nowrap; transition:all 0.3s; box-shadow:0 2px 8px rgba(200,164,92,0.2); }
+.msg-form button:hover { background:linear-gradient(135deg,var(--ocean-deep),var(--ocean-mid)); box-shadow:0 4px 16px rgba(26,58,74,0.3); transform:translateY(-1px); }
+.messages-list { display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto; }
+.msg-bubble { background:white; padding:12px 16px; border-radius:4px 14px 14px 14px; box-shadow:1px 2px 6px rgba(0,0,0,0.03); font-size:0.95rem; color:var(--ink-light); position:relative; animation:msgIn 0.4s ease-out; }
+.msg-bubble .msg-del { position:absolute; top:6px; right:8px; width:20px; height:20px; border-radius:50%; border:none; background:transparent; cursor:pointer; font-size:0.78rem; color:var(--ink-light); opacity:0; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+.msg-bubble:hover .msg-del { opacity:0.5; }
+.msg-bubble .msg-del:hover { opacity:1; background:#fce4e4; color:var(--rose); }
+@keyframes msgIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.msg-bubble .msg-from { font-size:0.92rem; color:var(--ocean-mid); margin-bottom:4px; font-weight:bold; }
+.msg-bubble .msg-time { font-size:0.78rem; color:var(--gold); margin-top:6px; }
+
+/* ── Q&A ── */
+.qa-subtabs { display:flex; gap:6px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
+.qa-subtab { padding:8px 18px; border-radius:16px; border:1.5px solid rgba(200,164,92,0.2); background:rgba(255,255,255,0.75); backdrop-filter:blur(4px); cursor:pointer; font-family:inherit; font-size:0.92rem; color:var(--ink-light); transition:all 0.3s; box-shadow:0 1px 3px rgba(0,0,0,0.03); }
+.qa-subtab:hover { border-color:var(--gold); color:var(--gold); box-shadow:0 2px 10px rgba(200,164,92,0.12); }
+.qa-subtab.active { background:linear-gradient(135deg,var(--gold),#b8943f); color:white; border-color:transparent; box-shadow:0 3px 12px rgba(200,164,92,0.25); }
+.qa-panel { display:none; }
+.qa-panel.active { display:block; }
+.qa-card { background:white; border-radius:14px; padding:20px 18px; margin-bottom:14px; box-shadow:1px 3px 12px rgba(0,0,0,0.04); border:1px solid rgba(0,0,0,0.04); }
+.qa-card .qa-q { font-size:0.95rem; color:var(--ink); line-height:1.7; margin-bottom:10px; }
+.qa-card .qa-meta { font-size:0.8rem; color:var(--ink-light); margin-bottom:12px; }
+.qa-card .qa-type-tag { font-size:0.88rem; padding:2px 10px; border-radius:10px; font-weight:bold; display:inline-block; }
+.tag-quiz { background:rgba(200,164,92,0.12); color:var(--gold); }
+.tag-daily { background:rgba(44,95,124,0.08); color:var(--ocean-mid); }
+.tag-checkin { background:rgba(193,123,123,0.1); color:var(--rose); }
+.qa-answer { margin-top:10px; padding:10px 14px; border-radius:6px 12px 12px 12px; font-size:0.92rem; line-height:1.6; }
+.qa-answer.LO { background:rgba(200,164,92,0.06); }
+.qa-answer.whale { background:rgba(141,181,201,0.08); border-radius:12px 6px 12px 12px; }
+.qa-answer .who { font-weight:bold; font-size:0.8rem; margin-bottom:3px; }
+.qa-answer .who.lo { color:var(--gold); }
+.qa-answer .who.wh { color:var(--ocean-mid); }
+.qa-answer .t { font-size:0.85rem; color:var(--ink-light); margin-top:4px; }
+.qa-input-area { margin-top:12px; }
+.qa-input-area textarea { width:100%; padding:10px 14px; border:1px solid rgba(200,164,92,0.25); border-radius:10px; font-family:inherit; font-size:0.95rem; background:rgba(250,246,240,0.5); resize:vertical; min-height:50px; outline:none; }
+.qa-input-area textarea:focus { border-color:var(--gold); }
+.qa-input-row { display:flex; gap:8px; margin-top:8px; align-items:center; }
+.qa-input-row select { padding:8px 12px; border-radius:16px; border:1px solid rgba(0,0,0,0.12); font-family:inherit; font-size:0.8rem; background:white; }
+.qa-del-btn { width:20px; height:20px; border-radius:50%; border:none; background:transparent; cursor:pointer; font-size:0.85rem; color:var(--ink-light); opacity:0; transition:all 0.2s; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.qa-card:hover .qa-del-btn { opacity:0.4; }
+.qa-del-btn:hover { opacity:1 !important; background:#fce4e4; color:var(--rose); }
+.btn { padding:9px 22px; border-radius:20px; border:none; cursor:pointer; font-family:inherit; font-size:0.92rem; transition:all 0.25s; font-weight:bold; letter-spacing:0.02em; }
+.btn-gold { background:linear-gradient(135deg,var(--gold),#b8943f); color:white; box-shadow:0 2px 8px rgba(200,164,92,0.25); }
+.btn-gold:hover { background:linear-gradient(135deg,var(--ocean-deep),var(--ocean-mid)); box-shadow:0 4px 16px rgba(26,58,74,0.3); transform:translateY(-1px); }
+.btn-outline { background:rgba(255,255,255,0.7); backdrop-filter:blur(4px); border:1.5px solid rgba(200,164,92,0.25); color:var(--ink-light); }
+.btn-outline:hover { border-color:var(--gold); color:var(--gold); background:rgba(255,255,255,0.9); box-shadow:0 2px 10px rgba(200,164,92,0.12); }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:var(--ocean-deep); color:white; padding:12px 28px; border-radius:24px; font-size:0.95rem; z-index:10001; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.toast.show { opacity:1; }
+
+/* ── FOOTER ── */
+.footer { text-align:center; margin-top:60px; padding-top:30px; border-top:1px solid rgba(200,164,92,0.15); }
+.footer-whale { font-size:2rem; display:block; animation:float 4s ease-in-out infinite; }
+
+/* ── REVEAL ── */
+.reveal { opacity:0; transform:translateY(30px); transition:opacity 0.8s,transform 0.8s; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .container{padding:0 14px 60px}
+  .tab-btn{padding:8px 14px;font-size:0.8rem}
+  .photo-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .msg-form{flex-direction:column}.msg-form button{width:100%}
+  .timeline{padding-left:24px}
+  .timeline-dot{left:-19px;width:10px;height:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════ HERO ═══════ -->
+  <section class="hero">
+    <div class="hero-icon">✏️</div>
+    <h1 class="hero-names">朱乐恺<span class="amp">&</span>许佳燕</h1>
+    <p class="hero-sub">铅笔骑士和他的小鲸鱼 🐳</p>
+    <div class="day-counter">
+      <span class="day-number" id="dayCount">…</span>
+      <span class="day-label">天</span>
+    </div>
+    <div class="day-since">从 2025 年 8 月 9 日起</div>
+  </section>
+
+  <!-- ═══════ TAB NAV ═══════ -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="story">📜 我们的故事</button>
+    <button class="tab-btn" data-tab="photos">📷 照片墙</button>
+    <button class="tab-btn" data-tab="wishes">🕯️ 许愿池</button>
+    <button class="tab-btn" data-tab="qa">💬 问答</button>
+  </nav>
+
+  <!-- ═══════ TAB 1: STORY ═══════ -->
+  <div class="panel active" id="panel-story">
+    <div class="timeline" id="timeline"></div>
+    <button class="add-story-btn" id="addStoryBtn">✏️ 写下一段故事</button>
+  </div>
+
+  <!-- ═══════ TAB 2: PHOTOS ═══════ -->
+  <div class="panel" id="panel-photos">
+    <div class="photo-grid" id="photoGrid">
+      <div class="photo-card placeholder-card">
+        <div class="tape" style="--tape-rot:-4deg;"></div>
+        <div class="photo-placeholder">🐳</div>
+        <div class="caption">等你来放第一张</div>
+      </div>
+      <div class="photo-card placeholder-card">
+        <div class="tape" style="--tape-rot:5deg;"></div>
+        <div class="photo-placeholder">✏️</div>
+        <div class="caption">我们的照片</div>
+      </div>
+      <div class="photo-card placeholder-card">
+        <div class="tape" style="--tape-rot:-2deg;"></div>
+        <div class="photo-placeholder">💌</div>
+        <div class="caption">等你来填满</div>
+      </div>
+    </div>
+    <p class="photo-upload-hint"><button id="addPhotoBtn" style="background:none;border:none;color:var(--gold);cursor:pointer;font-family:inherit;font-size:0.95rem;text-decoration:underline;">＋ 添加照片</button></p>
+    <input type="file" id="photoInput" accept="image/*" multiple hidden>
+  </div>
+
+  <!-- ═══════ TAB 3: WISHES ═══════ -->
+  <div class="panel" id="panel-wishes">
+    <div class="wishing-well" id="wishingWell">
+      <div class="msg-form">
+        <input type="text" id="msgInput" placeholder="写一张小纸条，许一个愿…" maxlength="200">
+        <button id="msgSend">🕊️ 投进去</button>
+      </div>
+      <div class="messages-list" id="messagesList">
+        <div class="msg-bubble">
+          <div class="msg-from">✏️ 铅笔骑士</div>以后你哭的时候，我不会再站在旁边不动了。
+          <div class="msg-time">2026.06.02</div>
+        </div>
+        <div class="msg-bubble" style="border-radius:14px 4px 14px 14px;background:rgba(141,181,201,0.08);">
+          <div class="msg-from">🐳 小鲸鱼</div>你说的哦。我记住了。
+          <div class="msg-time">未来某天</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ TAB 4: Q&A ═══════ -->
+  <div class="panel" id="panel-qa">
+    <div class="qa-subtabs">
+      <button class="qa-subtab active" data-qatab="quiz">✏️ 互相出题</button>
+      <button class="qa-subtab" data-qatab="daily">📅 每日一问</button>
+      <button class="qa-subtab" data-qatab="checkin">💭 关系复盘</button>
+    </div>
+
+    <div class="qa-panel active" id="qa-quiz">
+      <div style="text-align:center;margin-bottom:16px;">
+        <button class="btn btn-outline" id="showQuizForm">＋ 出一道题考考TA</button>
+      </div>
+      <div class="qa-card" id="quizFormCard" style="display:none;">
+        <label style="display:block;font-size:0.8rem;color:var(--ink-light);margin:8px 0 4px;">题目</label>
+        <textarea id="quizContent" placeholder="比如：我最喜欢的电影是什么？" maxlength="200" style="width:100%;padding:10px;border:1px solid rgba(200,164,92,0.25);border-radius:10px;font-family:inherit;font-size:0.95rem;min-height:50px;outline:none;"></textarea>
+        <label style="display:block;font-size:0.8rem;color:var(--ink-light);margin:8px 0 4px;">正确答案（选填）</label>
+        <input id="quizAnswer" placeholder="正确答案…" maxlength="100" style="width:100%;padding:10px;border:1px solid rgba(200,164,92,0.25);border-radius:10px;font-family:inherit;font-size:0.95rem;outline:none;">
+        <label style="display:block;font-size:0.8rem;color:var(--ink-light);margin:8px 0 4px;">你是</label>
+        <select id="quizAuthor" style="padding:8px 12px;border-radius:16px;border:1px solid rgba(0,0,0,0.12);font-family:inherit;font-size:0.95rem;">
+          <option value="LO">铅笔骑士</option><option value="小鲸鱼">小鲸鱼</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+          <button class="btn btn-outline" id="cancelQuiz">取消</button>
+          <button class="btn btn-gold" id="submitQuiz">发布</button>
+        </div>
+      </div>
+      <div id="quizList"></div>
+    </div>
+
+    <div class="qa-panel" id="qa-daily">
+      <div id="dailyQuestion"></div>
+      <div id="dailyHistory"></div>
+    </div>
+
+    <div class="qa-panel" id="qa-checkin">
+      <div style="text-align:center;margin-bottom:16px;">
+        <button class="btn btn-outline" id="showCheckinForm">＋ 发起一次复盘</button>
+      </div>
+      <div class="qa-card" id="checkinFormCard" style="display:none;">
+        <label style="display:block;font-size:0.8rem;color:var(--ink-light);margin:8px 0 4px;">你想聊什么话题？</label>
+        <textarea id="checkinContent" placeholder="比如：你觉得我们最近沟通得好吗？" maxlength="200" style="width:100%;padding:10px;border:1px solid rgba(200,164,92,0.25);border-radius:10px;font-family:inherit;font-size:0.95rem;min-height:60px;outline:none;"></textarea>
+        <label style="display:block;font-size:0.8rem;color:var(--ink-light);margin:8px 0 4px;">你是</label>
+        <select id="checkinAuthor" style="padding:8px 12px;border-radius:16px;border:1px solid rgba(0,0,0,0.12);font-family:inherit;font-size:0.95rem;">
+          <option value="LO">铅笔骑士</option><option value="小鲸鱼">小鲸鱼</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
+          <button class="btn btn-outline" id="cancelCheckin">取消</button>
+          <button class="btn btn-gold" id="submitCheckin">发起</button>
+        </div>
+      </div>
+      <div id="checkinList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer class="footer">
+    <span class="footer-whale">🐳</span>
+  </footer>
+
+</div>
+
+<!-- Story form overlay -->
+<div class="story-form-overlay" id="storyFormOverlay" style="display:none;">
+  <div class="story-form-card">
+    <h3 id="formTitle">✏️ 写下一段故事</h3>
+    <label>日期</label>
+    <input type="text" id="storyDate" placeholder="2025.08.09 或 初中" maxlength="40">
+    <label>标题</label>
+    <input type="text" id="storyTitle" placeholder="这段故事的名字…" maxlength="50">
+    <label>内容</label>
+    <textarea id="storyDesc" placeholder="写下发生了什么…" maxlength="400"></textarea>
+    <div class="story-form-btns">
+      <button class="btn-cancel" onclick="closeStoryForm()">取消</button>
+      <button class="btn-save" id="btnSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════ CONFIG ═══════
+const API_BASE = '/api';
+const AUTH = 'our-little-secret-2025';
+
+async function api(path, opts = {}) {
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: { 'X-Auth-Token': AUTH, 'Content-Type': 'application/json', ...(opts.headers || {}) }
+  });
+  if (!res.ok) throw new Error('API ' + res.status);
+  return res.json();
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ═══════ DAY COUNTER ═══════
+function updateCounter() {
+  const diff = Math.floor((new Date() - new Date('2025-08-09T13:36:00+08:00')) / 86400000);
+  document.getElementById('dayCount').textContent = diff;
+}
+updateCounter(); setInterval(updateCounter, 60000);
+
+// ═══════ SCROLL REVEAL ═══════
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+// ═══════ TAB SWITCHING ═══════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'story') renderTimeline();
+    if (btn.dataset.tab === 'photos') loadPhotos();
+    if (btn.dataset.tab === 'qa') loadQuizList();
+  });
+});
+
+// ═══════ TIMELINE ═══════
+let timelineData = [];
+let editingIndex = -1;
+
+async function loadTimeline() {
+  try { timelineData = await api('/timeline'); }
+  catch(e) {
+    const raw = localStorage.getItem('ourspace_timeline');
+    timelineData = raw ? JSON.parse(raw) : [
+      { id: '1', date: '初中', title: '相识', desc: '在惠来的中学时代认识彼此。' },
+      { id: '2', date: '2025.08.09', title: '"批准了"', desc: '她说了批准。' }
+    ];
+  }
+}
+
+function renderTimeline() {
+  const c = document.getElementById('timeline');
+  if (!c) return;
+  if (!timelineData.length) {
+    c.innerHTML = '<div class="timeline-empty">你们的故事还没开始写呢 ✨<br>点下方按钮写下第一段</div>'; return;
+  }
+  c.innerHTML = timelineData.map((item, i) => `
+    <div class="timeline-item reveal">
+      <div class="timeline-dot"></div>
+      <div class="timeline-actions">
+        <button class="timeline-btn edit" data-idx="${i}">✎</button>
+        <button class="timeline-btn del" data-idx="${i}">✕</button>
+      </div>
+      <div class="timeline-date">${esc(item.date)}</div>
+      <div class="timeline-title">${esc(item.title)}</div>
+      <div class="timeline-desc">${esc(item.desc).replace(/\n/g,'<br>')}</div>
+    </div>`).join('');
+  c.querySelectorAll('.timeline-btn.edit').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); openStoryForm(parseInt(b.dataset.idx)); }));
+  c.querySelectorAll('.timeline-btn.del').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); deleteStory(parseInt(b.dataset.idx)); }));
+  c.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}
+
+async function deleteStory(idx) {
+  if (!confirm('确定删除"' + timelineData[idx].title + '"吗？')) return;
+  try { await api('/timeline/' + timelineData[idx].id, { method: 'DELETE' }); await loadTimeline(); renderTimeline(); }
+  catch(e) { timelineData.splice(idx, 1); localStorage.setItem('ourspace_timeline', JSON.stringify(timelineData)); renderTimeline(); }
+}
+
+// Story Form
+const overlay = document.getElementById('storyFormOverlay');
+const formTitle = document.getElementById('formTitle');
+const storyDate = document.getElementById('storyDate');
+const storyTitle = document.getElementById('storyTitle');
+const storyDesc = document.getElementById('storyDesc');
+
+document.getElementById('addStoryBtn').addEventListener('click', () => openStoryForm(-1));
+overlay.addEventListener('click', e => { if (e.target === overlay) closeStoryForm(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.style.display !== 'none') closeStoryForm(); });
+
+function openStoryForm(idx) {
+  editingIndex = idx;
+  if (idx >= 0) {
+    formTitle.textContent = '✎ 编辑这段故事';
+    storyDate.value = timelineData[idx].date; storyTitle.value = timelineData[idx].title; storyDesc.value = timelineData[idx].desc;
+  } else {
+    formTitle.textContent = '✏️ 写下一段故事';
+    storyDate.value = ''; storyTitle.value = ''; storyDesc.value = '';
+  }
+  overlay.style.display = 'flex'; storyDate.focus();
+}
+function closeStoryForm() { overlay.style.display = 'none'; editingIndex = -1; }
+
+document.getElementById('btnSave').addEventListener('click', async () => {
+  const date = storyDate.value.trim(), title = storyTitle.value.trim(), desc = storyDesc.value.trim();
+  if (!date || !title || !desc) return toast('请填写完整');
+  try {
+    if (editingIndex >= 0) await api('/timeline/' + timelineData[editingIndex].id, { method: 'PUT', body: JSON.stringify({ date, title, desc }) });
+    else await api('/timeline', { method: 'POST', body: JSON.stringify({ date, title, desc }) });
+    await loadTimeline(); renderTimeline(); closeStoryForm();
+  } catch(e) {
+    if (editingIndex >= 0) Object.assign(timelineData[editingIndex], { date, title, desc });
+    else timelineData.push({ id: Date.now().toString(), date, title, desc });
+    localStorage.setItem('ourspace_timeline', JSON.stringify(timelineData));
+    renderTimeline(); closeStoryForm();
+  }
+});
+
+// ═══════ PHOTOS ═══════
+const PHOTO_STORE = 'ourspace_photos';
+const photoGrid = document.getElementById('photoGrid');
+const photoInput = document.getElementById('photoInput');
+let savedPhotos = [];
+
+function loadPhotos() {
+  try { savedPhotos = JSON.parse(localStorage.getItem(PHOTO_STORE) || '[]'); } catch(e) { savedPhotos = []; }
+  renderPhotos();
+}
+function savePhotos() { localStorage.setItem(PHOTO_STORE, JSON.stringify(savedPhotos)); }
+
+function renderPhotos() {
+  photoGrid.querySelectorAll('.photo-card:not(.placeholder-card)').forEach(c => c.remove());
+  if (!savedPhotos.length) {
+    if (!photoGrid.querySelector('.placeholder-card')) {
+      photoGrid.innerHTML = `
+        <div class="photo-card placeholder-card"><div class="tape" style="--tape-rot:-4deg;"></div><div class="photo-placeholder">🐳</div><div class="caption">等你来放第一张</div></div>
+        <div class="photo-card placeholder-card"><div class="tape" style="--tape-rot:5deg;"></div><div class="photo-placeholder">✏️</div><div class="caption">我们的照片</div></div>
+        <div class="photo-card placeholder-card"><div class="tape" style="--tape-rot:-2deg;"></div><div class="photo-placeholder">💌</div><div class="caption">等你来填满</div></div>`;
+    }
+    return;
+  }
+  photoGrid.querySelectorAll('.placeholder-card').forEach(c => c.remove());
+  savedPhotos.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'photo-card reveal visible';
+    card.innerHTML = `<div class="tape" style="--tape-rot:${(i%2?-1:1)*(1+Math.random()*3)}deg;"></div><img src="${p.src}" alt="photo"><div class="caption">${p.date}</div><button class="photo-delete-btn" data-idx="${i}">✕</button>`;
+    card.addEventListener('mouseenter', () => { card.querySelector('.photo-delete-btn').style.display = 'block'; });
+    card.addEventListener('mouseleave', () => { card.querySelector('.photo-delete-btn').style.display = 'none'; });
+    card.querySelector('.photo-delete-btn').addEventListener('click', e => { e.stopPropagation(); savedPhotos.splice(i,1); savePhotos(); renderPhotos(); });
+    photoGrid.appendChild(card);
+    observer.observe(card);
+  });
+}
+
+document.getElementById('addPhotoBtn').addEventListener('click', () => photoInput.click());
+photoGrid.addEventListener('click', e => { if (e.target.closest('.photo-placeholder')) photoInput.click(); });
+photoInput.addEventListener('change', e => {
+  const files = Array.from(e.target.files); let done = 0;
+  files.forEach(f => {
+    const r = new FileReader();
+    r.onload = ev => { savedPhotos.push({ src: ev.target.result, date: new Date().toLocaleDateString('zh-CN') }); done++; if (done === files.length) { savePhotos(); renderPhotos(); } };
+    r.readAsDataURL(f);
+  });
+  photoInput.value = '';
+});
+
+// ═══════ WISHING WELL ═══════
+(function() {
+  const MSG_STORE = 'ourspace_messages';
+  let messages = [];
+  try { messages = JSON.parse(localStorage.getItem(MSG_STORE) || '[]'); } catch(e) {}
+  if (!messages.length) {
+    messages = [
+      { from: 'LO', text: '以后你哭的时候，我不会再站在旁边不动了。', time: '2026.06.02' },
+      { from: '小鲸鱼', text: '你说的哦。我记住了。', time: '未来某天' }
+    ];
+  }
+
+  const list = document.getElementById('messagesList');
+  function renderMessages() {
+    list.innerHTML = messages.map((m, i) => `
+      <div class="msg-bubble" style="${m.from==='小鲸鱼'?'border-radius:14px 4px 14px 14px;background:rgba(141,181,201,0.08);':''}">
+        <button class="msg-del" data-idx="${i}" title="删除">✕</button>
+        <div class="msg-from">${m.from==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>${esc(m.text)}<div class="msg-time">${m.time}</div>
+      </div>`).join('');
+    list.querySelectorAll('.msg-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const i = parseInt(btn.dataset.idx);
+        messages.splice(i, 1);
+        localStorage.setItem(MSG_STORE, JSON.stringify(messages));
+        renderMessages();
+      });
+    });
+    list.scrollTop = list.scrollHeight;
+  }
+  renderMessages();
+
+  document.getElementById('msgSend').addEventListener('click', () => {
+    const text = document.getElementById('msgInput').value.trim();
+    if (!text) return;
+    const now = new Date();
+    messages.push({ from: 'LO', text, time: now.toLocaleDateString('zh-CN') + ' ' + now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) });
+    localStorage.setItem(MSG_STORE, JSON.stringify(messages));
+    document.getElementById('msgInput').value = '';
+    renderMessages();
+  });
+  document.getElementById('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('msgSend').click(); });
+})();
+
+// ═══════ Q&A ═══════
+// QA Sub-tabs
+document.querySelectorAll('.qa-subtab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.qa-subtab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.qa-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('qa-' + btn.dataset.qatab).classList.add('active');
+    if (btn.dataset.qatab === 'quiz') loadQuizList();
+    if (btn.dataset.qatab === 'daily') loadDaily();
+    if (btn.dataset.qatab === 'checkin') loadCheckinList();
+  });
+});
+
+// Quiz
+document.getElementById('showQuizForm').addEventListener('click', () => { document.getElementById('quizFormCard').style.display = 'block'; });
+document.getElementById('cancelQuiz').addEventListener('click', () => {
+  document.getElementById('quizFormCard').style.display = 'none';
+  document.getElementById('quizContent').value = ''; document.getElementById('quizAnswer').value = '';
+});
+document.getElementById('submitQuiz').addEventListener('click', async () => {
+  const content = document.getElementById('quizContent').value.trim();
+  if (!content) return toast('题目不能为空');
+  try {
+    await api('/questions', { method: 'POST', body: JSON.stringify({
+      type: 'quiz', content, author: document.getElementById('quizAuthor').value,
+      correctAnswer: document.getElementById('quizAnswer').value.trim()
+    })});
+    toast('题目已发布！');
+    document.getElementById('quizFormCard').style.display = 'none';
+    document.getElementById('quizContent').value = ''; document.getElementById('quizAnswer').value = '';
+    loadQuizList();
+  } catch(e) { toast('发布失败'); }
+});
+
+async function loadQuizList() {
+  const c = document.getElementById('quizList');
+  try {
+    const qs = await api('/questions?type=quiz');
+    if (!qs.length) { c.innerHTML = '<div class="timeline-empty">还没有题目，来出第一道吧 ✏️</div>'; return; }
+    c.innerHTML = await Promise.all(qs.map(async q => {
+      const answers = await api('/questions/' + q.id + '/answers');
+      let ansHTML = answers.map(a => `
+        <div class="qa-answer ${a.author==='LO'?'LO':'whale'}">
+          <div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>
+          ${esc(a.content)}<div class="t">${fmtTime(a.createdAt)}</div>
+        </div>`).join('');
+      const both = answers.some(a=>a.author==='LO') && answers.some(a=>a.author==='小鲸鱼');
+      let correct = '';
+      if (q.correctAnswer) {
+        correct = both ? `<div style="margin-top:10px;padding:10px 14px;background:rgba(200,164,92,0.08);border-radius:10px;border-left:3px solid var(--gold);font-size:0.8rem;"><b style="color:var(--gold);">✅ 正确答案：</b>${esc(q.correctAnswer)}</div>`
+          : (answers.length === 1 ? `<div style="margin-top:10px;font-size:0.8rem;color:var(--ink-light);opacity:0.5;">🔒 等TA也答完就揭晓</div>` : '');
+      }
+      return `<div class="qa-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="qa-type-tag tag-quiz">互相出题</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="qa-meta" style="margin:0;">${q.author==='LO'?'✏️ 铅笔骑士 出题':'🐳 小鲸鱼 出题'} · ${fmtTime(q.createdAt)}</span>
+            <button class="qa-del-btn" data-qid="${q.id}" title="删除题目">✕</button>
+          </div>
+        </div>
+        <div class="qa-q">${esc(q.content)}</div>${correct}${ansHTML}
+        <div class="qa-input-area">
+          <textarea placeholder="写下你的回答…" rows="2"></textarea>
+          <div class="qa-input-row">
+            <select class="awho"><option value="LO">我是 铅笔骑士</option><option value="小鲸鱼">我是 小鲸鱼</option></select>
+            <button class="btn btn-gold qa-submit" data-qid="${q.id}">提交</button>
+          </div>
+        </div>
+      </div>`;
+    }));
+    c.querySelectorAll('.qa-del-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!confirm('确定删除这道题目吗？相关回答也会一并删除。')) return;
+        try { await api('/questions/' + btn.dataset.qid, { method: 'DELETE' }); toast('已删除'); loadQuizList(); }
+        catch(e) { toast('删除失败'); }
+      });
+    });
+    c.querySelectorAll('.qa-submit').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const card = btn.closest('.qa-card');
+        const text = card.querySelector('textarea').value.trim();
+        const author = card.querySelector('.awho').value;
+        if (!text) return toast('请先写下你的回答');
+        try { await api('/questions/' + btn.dataset.qid + '/answers', { method: 'POST', body: JSON.stringify({ author, content: text }) }); toast('已提交'); loadQuizList(); }
+        catch(e) { toast('提交失败'); }
+      });
+    });
+  } catch(e) { c.innerHTML = '<div class="timeline-empty">加载失败，请确认后端已启动</div>'; }
+}
+
+// Daily
+async function loadDaily() {
+  const qc = document.getElementById('dailyQuestion');
+  const hc = document.getElementById('dailyHistory');
+  try {
+    const q = await api('/questions/daily');
+    if (!q) { qc.innerHTML = '<div class="timeline-empty">还没有每日一问</div>'; return; }
+    const answers = await api('/questions/' + q.id + '/answers');
+    const today = new Date().toDateString();
+    const ta = answers.filter(a => new Date(a.createdAt).toDateString() === today);
+    qc.innerHTML = `<div class="qa-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <span class="qa-type-tag tag-daily">每日一问</span><span class="qa-meta" style="margin:0;">${new Date().toLocaleDateString('zh-CN')}</span>
+      </div>
+      <div class="qa-q" style="font-size:1.05rem;">${esc(q.content)}</div>
+      ${ta.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}"><div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>${esc(a.content)}<div class="t">${fmtTime(a.createdAt)}</div></div>`).join('')}
+      <div class="qa-input-area">
+        <textarea placeholder="写下今天的回答…" rows="2"></textarea>
+        <div class="qa-input-row">
+          <select class="awho"><option value="LO">我是 铅笔骑士</option><option value="小鲸鱼">我是 小鲸鱼</option></select>
+          <button class="btn btn-gold daily-submit" data-qid="${q.id}">提交</button>
+        </div>
+      </div></div>`;
+    qc.querySelector('.daily-submit')?.addEventListener('click', async function() {
+      const card = this.closest('.qa-card');
+      const text = card.querySelector('textarea').value.trim();
+      const author = card.querySelector('.awho').value;
+      if (!text) return toast('请先写下回答');
+      try { await api('/questions/' + this.dataset.qid + '/answers', { method: 'POST', body: JSON.stringify({ author, content: text }) }); toast('已提交'); loadDaily(); }
+      catch(e) { toast('提交失败'); }
+    });
+
+    const hist = await api('/answers/history?type=daily&days=30');
+    if (hist.length) {
+      const g = {}; hist.forEach(a => { const d = new Date(a.createdAt).toLocaleDateString('zh-CN'); if (!g[d]) g[d] = { q: a.questionContent, as: [] }; g[d].as.push(a); });
+      hc.innerHTML = '<h3 style="margin-top:20px;margin-bottom:10px;color:var(--ocean-mid);font-size:0.9rem;">📜 最近的每日记录</h3>' +
+        Object.entries(g).slice(0,14).map(([d, v]) => `<div class="qa-card" style="padding:14px 16px;"><div class="qa-meta">${d}</div><div style="font-size:0.88rem;margin:4px 0;">${esc(v.q)}</div>${v.as.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}" style="margin-top:6px;"><b style="font-size:0.8rem;">${a.author==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</b> ${esc(a.content)}</div>`).join('')}</div>`).join('');
+    }
+  } catch(e) { qc.innerHTML = '<div class="timeline-empty">加载失败</div>'; }
+}
+
+// Checkin
+document.getElementById('showCheckinForm').addEventListener('click', () => { document.getElementById('checkinFormCard').style.display = 'block'; });
+document.getElementById('cancelCheckin').addEventListener('click', () => {
+  document.getElementById('checkinFormCard').style.display = 'none'; document.getElementById('checkinContent').value = '';
+});
+document.getElementById('submitCheckin').addEventListener('click', async () => {
+  const content = document.getElementById('checkinContent').value.trim();
+  if (!content) return toast('内容不能为空');
+  try {
+    await api('/questions', { method: 'POST', body: JSON.stringify({
+      type: 'checkin', content, author: document.getElementById('checkinAuthor').value
+    })});
+    toast('复盘话题已发起！');
+    document.getElementById('checkinFormCard').style.display = 'none'; document.getElementById('checkinContent').value = '';
+    loadCheckinList();
+  } catch(e) { toast('发起失败'); }
+});
+
+async function loadCheckinList() {
+  const c = document.getElementById('checkinList');
+  try {
+    const qs = await api('/questions?type=checkin');
+    if (!qs.length) { c.innerHTML = '<div class="timeline-empty">还没有复盘话题 💭</div>'; return; }
+    c.innerHTML = await Promise.all(qs.map(async q => {
+      const answers = await api('/questions/' + q.id + '/answers');
+      const both = answers.some(a=>a.author==='LO') && answers.some(a=>a.author==='小鲸鱼');
+      return `<div class="qa-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span class="qa-type-tag tag-checkin">关系复盘</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="qa-meta" style="margin:0;">${q.author==='system'?'系统':q.author} · ${fmtTime(q.createdAt)}</span>
+            <button class="qa-del-btn" data-qid="${q.id}" title="删除">✕</button>
+          </div>
+        </div>
+        <div class="qa-q">${esc(q.content)}</div>
+        ${both ? '<div style="font-size:0.8rem;color:var(--rose);margin-bottom:8px;">🌹 两个人都已回答</div>' : answers.length===1 ? '<div style="font-size:0.8rem;color:var(--ink-light);margin-bottom:8px;">等待另一半的回答…</div>' : ''}
+        ${answers.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}"><div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>${esc(a.content)}<div class="t">${fmtTime(a.createdAt)}</div></div>`).join('')}
+        <div class="qa-input-area">
+          <textarea placeholder="写下你的真心话…" rows="3"></textarea>
+          <div class="qa-input-row">
+            <select class="awho"><option value="LO">我是 铅笔骑士</option><option value="小鲸鱼">我是 小鲸鱼</option></select>
+            <button class="btn btn-gold checkin-submit" data-qid="${q.id}">提交</button>
+          </div>
+        </div>
+      </div>`;
+    }));
+    c.querySelectorAll('.qa-del-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!confirm('确定删除这个复盘话题吗？')) return;
+        try { await api('/questions/' + btn.dataset.qid, { method: 'DELETE' }); toast('已删除'); loadCheckinList(); }
+        catch(e) { toast('删除失败'); }
+      });
+    });
+    c.querySelectorAll('.checkin-submit').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const card = btn.closest('.qa-card');
+        const text = card.querySelector('textarea').value.trim();
+        const author = card.querySelector('.awho').value;
+        if (!text) return toast('请先写下想法');
+        try { await api('/questions/' + btn.dataset.qid + '/answers', { method: 'POST', body: JSON.stringify({ author, content: text }) }); toast('已提交'); loadCheckinList(); }
+        catch(e) { toast('提交失败'); }
+      });
+    });
+  } catch(e) { c.innerHTML = '<div class="timeline-empty">加载失败</div>'; }
+}
+
+// ═══════ INIT ═══════
+loadTimeline().then(() => { renderTimeline(); });
+loadPhotos();
+</script>
+</body>
+</html>
