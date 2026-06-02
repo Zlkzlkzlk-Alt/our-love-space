@@ -76,6 +76,54 @@ app.delete('/api/timeline/:id', auth, (req, res) => {
   res.json({ deleted: true });
 });
 
+// ═══════ API: Photos ═══════
+app.get('/api/photos', auth, (req, res) => {
+  res.json(readData('photos.json'));
+});
+
+app.post('/api/photos', auth, (req, res) => {
+  const { src, date } = req.body;
+  if (!src) return res.status(400).json({ error: 'src required' });
+  const photos = readData('photos.json');
+  const photo = { id: genId(), src, date: date || new Date().toLocaleDateString('zh-CN'), createdAt: new Date().toISOString() };
+  photos.push(photo);
+  writeData('photos.json', photos);
+  res.status(201).json(photo);
+});
+
+app.delete('/api/photos/:id', auth, (req, res) => {
+  let photos = readData('photos.json');
+  const before = photos.length;
+  photos = photos.filter(p => p.id !== req.params.id);
+  if (photos.length === before) return res.status(404).json({ error: 'not found' });
+  writeData('photos.json', photos);
+  res.json({ deleted: true });
+});
+
+// ═══════ API: Messages ═══════
+app.get('/api/messages', auth, (req, res) => {
+  res.json(readData('messages.json'));
+});
+
+app.post('/api/messages', auth, (req, res) => {
+  const { from, text } = req.body;
+  if (!from || !text) return res.status(400).json({ error: 'from, text required' });
+  const messages = readData('messages.json');
+  const msg = { id: genId(), from, text, createdAt: new Date().toISOString() };
+  messages.push(msg);
+  writeData('messages.json', messages);
+  res.status(201).json(msg);
+});
+
+app.delete('/api/messages/:id', auth, (req, res) => {
+  let messages = readData('messages.json');
+  const before = messages.length;
+  messages = messages.filter(m => m.id !== req.params.id);
+  if (messages.length === before) return res.status(404).json({ error: 'not found' });
+  writeData('messages.json', messages);
+  res.json({ deleted: true });
+});
+
 // ═══════ API: Questions & Answers (for later) ═══════
 app.get('/api/questions', auth, (req, res) => {
   let qs = readData('questions.json');
@@ -194,6 +242,12 @@ function seedIfEmpty() {
   }
   if (!fs.existsSync(path.join(DATA_DIR, 'answers.json'))) {
     writeData('answers.json', []);
+  }
+  if (!fs.existsSync(path.join(DATA_DIR, 'photos.json'))) {
+    writeData('photos.json', []);
+  }
+  if (!fs.existsSync(path.join(DATA_DIR, 'messages.json'))) {
+    writeData('messages.json', []);
   }
 }
 

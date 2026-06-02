@@ -452,16 +452,14 @@ document.getElementById('btnSave').addEventListener('click', async () => {
 });
 
 // ═══════ PHOTOS ═══════
-const PHOTO_STORE = 'ourspace_photos';
 const photoGrid = document.getElementById('photoGrid');
 const photoInput = document.getElementById('photoInput');
 let savedPhotos = [];
 
-function loadPhotos() {
-  try { savedPhotos = JSON.parse(localStorage.getItem(PHOTO_STORE) || '[]'); } catch(e) { savedPhotos = []; }
+async function loadPhotos() {
+  try { savedPhotos = await api('/photos'); } catch(e) { savedPhotos = []; }
   renderPhotos();
 }
-function savePhotos() { localStorage.setItem(PHOTO_STORE, JSON.stringify(savedPhotos)); }
 
 function renderPhotos() {
   photoGrid.querySelectorAll('.photo-card:not(.placeholder-card)').forEach(c => c.remove());
@@ -481,7 +479,7 @@ function renderPhotos() {
     card.innerHTML = `<div class="tape" style="--tape-rot:${(i%2?-1:1)*(1+Math.random()*3)}deg;"></div><img src="${p.src}" alt="photo"><div class="caption">${p.date}</div><button class="photo-delete-btn" data-idx="${i}">✕</button>`;
     card.addEventListener('mouseenter', () => { card.querySelector('.photo-delete-btn').style.display = 'block'; });
     card.addEventListener('mouseleave', () => { card.querySelector('.photo-delete-btn').style.display = 'none'; });
-    card.querySelector('.photo-delete-btn').addEventListener('click', e => { e.stopPropagation(); savedPhotos.splice(i,1); savePhotos(); renderPhotos(); });
+    card.querySelector('.photo-delete-btn').addEventListener('click', async e => { e.stopPropagation(); try { await api('/photos/' + savedPhotos[i].id, { method: 'DELETE' }); } catch(e) {} await loadPhotos(); renderPhotos(); });
     photoGrid.appendChild(card);
     observer.observe(card);
   });
@@ -489,50 +487,49 @@ function renderPhotos() {
 
 document.getElementById('addPhotoBtn').addEventListener('click', () => photoInput.click());
 photoGrid.addEventListener('click', e => { if (e.target.closest('.photo-placeholder')) photoInput.click(); });
-photoInput.addEventListener('change', e => {
-  const files = Array.from(e.target.files); let done = 0;
-  files.forEach(f => {
-    const r = new FileReader();
-    r.onload = ev => { savedPhotos.push({ src: ev.target.result, date: new Date().toLocaleDateString('zh-CN') }); done++; if (done === files.length) { savePhotos(); renderPhotos(); } };
-    r.readAsDataURL(f);
-  });
+photoInput.addEventListener('change', async e => {
+  const files = Array.from(e.target.files);
+  for (const f of files) {
+    const src = await new Promise(resolve => { const r = new FileReader(); r.onload = ev => resolve(ev.target.result); r.readAsDataURL(f); });
+    try { await api('/photos', { method: 'POST', body: JSON.stringify({ src, date: new Date().toLocaleDateString('zh-CN') }) }); } catch(e) { toast('上传失败'); }
+  }
   photoInput.value = '';
+  await loadPhotos();
+  renderPhotos();
 });
 
 // ═══════ WISHING WELL ═══════
-(function() {
-  const MSG_STORE = 'ourspace_messages';
+(async function() {
   let messages = [];
-  try { messages = JSON.parse(localStorage.getItem(MSG_STORE) || '[]'); } catch(e) {}
+  try { messages = await api('/messages'); } catch(e) {}
 
   const list = document.getElementById('messagesList');
-  function renderMessages() {
+  async function renderMessages() {
     list.innerHTML = messages.map((m, i) => `
       <div class="msg-bubble" style="${m.from==='小鲸鱼'?'border-radius:14px 4px 14px 14px;background:rgba(141,181,201,0.08);':''}">
         <button class="msg-del" data-idx="${i}" title="删除">✕</button>
-        <div class="msg-from">${m.from==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>${esc(m.text)}<div class="msg-time">${m.time}</div>
+        <div class="msg-from">${m.from==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>${esc(m.text)}<div class="msg-time">${fmtTime(m.createdAt)}</div>
       </div>`).join('');
     list.querySelectorAll('.msg-del').forEach(btn => {
-      btn.addEventListener('click', e => {
+      btn.addEventListener('click', async e => {
         e.stopPropagation();
         const i = parseInt(btn.dataset.idx);
-        messages.splice(i, 1);
-        localStorage.setItem(MSG_STORE, JSON.stringify(messages));
-        renderMessages();
+        try { await api('/messages/' + messages[i].id, { method: 'DELETE' }); } catch(e) {}
+        messages = await api('/messages');
+        await renderMessages();
       });
     });
     list.scrollTop = list.scrollHeight;
   }
   renderMessages();
 
-  document.getElementById('msgSend').addEventListener('click', () => {
+  document.getElementById('msgSend').addEventListener('click', async () => {
     const text = document.getElementById('msgInput').value.trim();
     if (!text) return;
-    const now = new Date();
-    messages.push({ from: 'LO', text, time: now.toLocaleDateString('zh-CN') + ' ' + now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) });
-    localStorage.setItem(MSG_STORE, JSON.stringify(messages));
+    try { await api('/messages', { method: 'POST', body: JSON.stringify({ from: 'LO', text }) }); } catch(e) { return toast('发送失败'); }
     document.getElementById('msgInput').value = '';
-    renderMessages();
+    messages = await api('/messages');
+    await renderMessages();
   });
   document.getElementById('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('msgSend').click(); });
 })();
