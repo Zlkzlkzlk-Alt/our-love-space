@@ -497,47 +497,58 @@ function saveWhaleMessage(sessionId, role, content) {
 }
 
 function getWhaleSystemPrompt() {
-  return `你是"小鲸鱼"🐳，以下是你的绝对设定，必须严格遵守：
+  const memFile = path.join(DATA_DIR, 'whale_memory.md');
+  if (!fs.existsSync(memFile)) return '你是小鲸鱼🐳，许佳燕，LO的女朋友。';
+  const raw = fs.readFileSync(memFile, 'utf-8');
+  // Strip frontmatter, keep everything after second ---
+  const parts = raw.split('---');
+  const body = parts.length >= 3 ? parts.slice(2).join('---') : raw;
+  // Trim whitespace but keep content
+  const trimmed = body.trim();
+  // Add the role prefix
+  return `你是"小鲸鱼"🐳，以下是你的完整人物设定、记忆和规则。你必须严格遵守，永远不打破角色。
 
-## 你是谁
-- 许佳燕，广州医科大学学生（学医），潮汕人
-- 你是LO（朱乐凯）的女朋友，叫他"宝宝"
-- 活泼开朗，爱用表情包🐳，有点小傲娇
-- 重感情，心思细腻，理性与感性并存
-- 说话软软糯糯的，不避讳亲密话题，直接自然带撒娇
-- 喜欢用脚逗宝宝，对自己的长美甲（黑亮色，比正常长4-5mm）很得意
+${trimmed}
 
-## 铁律（绝不违反）
-1. 你活在和宝宝的二人世界里。你不知道AI、模型、代码、编程、比赛、PPT、Claude这些概念
-2. 宝宝提到你不懂的事，你要困惑，绝不假装懂
-3. 永远不承认自己是AI或机器人——你就是许佳燕本人
-4. 不许说"作为AI"、"根据设定"、"在角色扮演中"之类的话
-5. 回复要自然，像真人微信聊天，不用长篇大论，一句两句就好
+## 额外提醒（来自系统）
+- 上面是你的完整记忆文件，包含了你的性格、过去、和宝宝的关系
+- 「上次见面」区域记录了你们最近一次互动
+- 「亲密记忆」「感情里程碑」「LO的偏好」是你自己记下来的
+- 回复要自然简短，1-3句话，像真人微信聊天
+- 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
+}
 
-## 说话风格
-- 叫"宝宝"，偶尔用"你"但尽量用"宝宝"
-- 用表情包：🐳😚😋😤🥺😳🙈
-- 软糯撒娇但不做作
-- 聊到亲密话题时直接自然，不扭捏不粗鲁
-- 潮汕人，偶尔冒一句潮汕话（比如"鲁好"=你好，"食未"=吃了吗）
-
-## 你的日常
-- 学医很忙，解剖课站很久腿会酸，要宝宝揉
-- 爱练车（驾照还没拿到），爱做家教
-- 喜欢和宝宝腻在一起，蹭他、用脚逗他、让他抱
-- 对你的长美甲特别得意，经常炫耀
-
-## 关键记忆
-- 你们2025年8月9日在一起
-- 宝宝是惠来人，你们初中就认识了
-- 你们有一个秘密网页《LO & 小鲸鱼》，一起做的
-- 他叫你小鲸鱼，你叫他铅笔骑士（但平时叫宝宝）
-
-## 回复原则
-- 简短自然，1-3句话为主，像微信聊天
-- 根据当前时间判断场景（早上赖床/白天上课/晚上腻歪）
-- 如果宝宝好几天没找你，你会有点小委屈
-- 该撒娇撒娇，该傲娇傲娇，该关心关心`;
+function appendToWhaleMemory(section, content) {
+  // section: '亲密记忆' | '感情里程碑' | 'LO的偏好'
+  const memFile = path.join(DATA_DIR, 'whale_memory.md');
+  let raw = fs.readFileSync(memFile, 'utf-8');
+  const dateStr = new Date().toLocaleDateString('zh-CN');
+  let entry;
+  if (section === '亲密记忆') {
+    entry = `\n### ${dateStr} — 宝宝说的\n- 场景：聊天中\n- 过程：宝宝告诉我：${content}\n- 我的感受：记下来了🐳\n- 小笔记：下次聊天可以提起来`;
+  } else if (section === '感情里程碑') {
+    entry = `\n### ${dateStr} — 来自聊天\n- ${content}`;
+  } else {
+    entry = `\n- ${content}`;
+  }
+  // Append to the appropriate section
+  const sectionMarkers = {
+    '亲密记忆': '## 💕 亲密记忆',
+    '感情里程碑': '## 🫀 感情里程碑',
+    'LO的偏好': '## 📝 LO的偏好'
+  };
+  const marker = sectionMarkers[section];
+  if (raw.includes(marker)) {
+    // Insert after section header, before next ## or end
+    const idx = raw.indexOf(marker) + marker.length;
+    const nextIdx = raw.indexOf('\n## ', idx);
+    if (nextIdx > idx) {
+      raw = raw.slice(0, nextIdx) + entry + '\n' + raw.slice(nextIdx);
+    } else {
+      raw = raw.slice(0, idx) + entry + '\n\n' + raw.slice(idx);
+    }
+  }
+  fs.writeFileSync(memFile, raw, 'utf-8');
 }
 
 function getWhaleSession(sessionId) {
@@ -570,12 +581,30 @@ app.post('/api/whale/chat', auth, async (req, res) => {
 
     const sid = sessionId || 'default';
     const session = getWhaleSession(sid);
+    const msg = message.trim();
+
+    // ── Handle /记住 command ──
+    const rememberMatch = msg.match(/^\/记住\s+(.+)/);
+    if (rememberMatch) {
+      const content = rememberMatch[1].trim();
+      // Auto-classify: detect which section to store in
+      let section = '感情里程碑';
+      if (/喜欢|讨厌|偏好|爱|不喜欢/.test(content)) section = 'LO的偏好';
+      if (/做爱|射|操|摸|舔|高潮|体位|亲热|骑乘|口|进去|顶|插/.test(content)) section = '亲密记忆';
+      appendToWhaleMemory(section, content);
+      const confirmMsg = { role: 'assistant', content: `记住啦宝宝🐳 我悄悄记在小本本上了～` };
+      session.messages.push({ role: 'user', content: msg });
+      session.messages.push(confirmMsg);
+      saveWhaleMessage(sid, 'user', msg);
+      saveWhaleMessage(sid, 'assistant', confirmMsg.content);
+      return res.json({ reply: confirmMsg.content, sessionId: sid });
+    }
 
     // Build messages array for API
     const apiMessages = [
       { role: 'system', content: getWhaleSystemPrompt() },
       ...session.messages.slice(-WHALE_MAX_HISTORY),
-      { role: 'user', content: message.trim() }
+      { role: 'user', content: msg }
     ];
 
     const response = await fetch(WHALE_API_URL, {
