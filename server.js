@@ -472,9 +472,9 @@ app.get('/api/health', (req, res) => {
 });
 
 // ═══════ 小鲸鱼 AI 聊天 ═══════
-const WHALE_API_KEY = 'sk-374fbcbfe6204a62db6c2cdfa5e51ca0b796b6250462f008';
-const WHALE_API_URL = 'https://api.lk888.ai/api/v1/chat/completions';
-const WHALE_MODEL = 'gpt-5.4-mini';
+const WHALE_API_KEY = 'sk-3af78bcc26c04f889b1e54361e4a571d';
+const WHALE_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const WHALE_MODEL = 'deepseek-chat';
 const WHALE_MAX_HISTORY = 30; // keep last 30 messages per session
 
 const whaleSessions = new Map(); // sessionId → { messages: [], lastAccess: timestamp }
