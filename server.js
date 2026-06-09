@@ -6,9 +6,9 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3456;
-const DATA_DIR = path.join(__dirname, 'data');
-const PHOTOS_DIR = 'D:/LO_photos';
-const SECRET = 'our-little-secret-2025';
+const DATA_DIR = fs.existsSync('/data') ? '/data' : path.join(__dirname, 'data');
+const PHOTOS_DIR = process.env.PHOTOS_DIR || (fs.existsSync('/data/photos') ? '/data/photos' : path.join(DATA_DIR, 'photos'));
+const SECRET = process.env.AUTH_TOKEN || 'our-little-secret-2025';
 
 app.use(cors());
 app.use(express.json({ limit: '200mb' }));
@@ -22,6 +22,10 @@ const NO_CACHE = {
 app.get('/', (req, res) => {
   res.set(NO_CACHE);
   res.sendFile(path.join(__dirname, 'public', 'index.html'), { etag: false, lastModified: false, cacheControl: false });
+});
+app.get('/admin', (req, res) => {
+  res.set(NO_CACHE);
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'), { etag: false, lastModified: false, cacheControl: false });
 });
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
@@ -842,6 +846,56 @@ app.post('/api/pencil/reset', auth, (req, res) => {
   delete chats[sid];
   savePencilChats(chats);
   res.json({ ok: true, message: '铅笔骑士的记忆被清空了 ✏️' });
+});
+
+// ═══════ Admin: view all chat records ═══════
+const ADMIN_TOKEN = 'pencil-admin-2025-secret';
+
+function authAdmin(req, res, next) {
+  const token = req.headers['x-admin-token'];
+  if (token !== ADMIN_TOKEN) {
+    return res.status(401).json({ error: 'admin unauthorized' });
+  }
+  next();
+}
+
+// List all sessions for a chat type
+app.get('/api/admin/sessions', authAdmin, (req, res) => {
+  const { type } = req.query;
+  let sessions = {};
+  if (type === 'whale' || !type) {
+    sessions.whale = Object.keys(loadWhaleChats());
+  }
+  if (type === 'pencil' || !type) {
+    sessions.pencil = Object.keys(loadPencilChats());
+  }
+  res.json(sessions);
+});
+
+// View specific session chat history
+app.get('/api/admin/chats/:type/:sessionId', authAdmin, (req, res) => {
+  const { type, sessionId } = req.params;
+  let chats;
+  if (type === 'whale') chats = loadWhaleChats();
+  else if (type === 'pencil') chats = loadPencilChats();
+  else return res.status(400).json({ error: 'type must be whale or pencil' });
+
+  const session = chats[sessionId];
+  if (!session) return res.status(404).json({ error: 'session not found' });
+  res.json({ sessionId, messages: session });
+});
+
+// Admin health with record counts
+app.get('/api/admin/stats', authAdmin, (req, res) => {
+  const whaleChats = loadWhaleChats();
+  const pencilChats = loadPencilChats();
+  res.json({
+    whaleSessions: Object.keys(whaleChats).length,
+    whaleMessages: Object.values(whaleChats).reduce((s, m) => s + m.length, 0),
+    pencilSessions: Object.keys(pencilChats).length,
+    pencilMessages: Object.values(pencilChats).reduce((s, m) => s + m.length, 0),
+    lastUpdate: new Date().toISOString()
+  });
 });
 
 // ═══════ DELETE question ═══════

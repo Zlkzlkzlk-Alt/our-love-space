@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔍 监控面板</title>
+<style>
+:root { --bg:#1a1a2e; --card:#16213e; --accent:#e94560; --gold:#c8a45c; --text:#e0e0e0; --muted:#888; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.header { background:var(--card); padding:16px 24px; border-bottom:2px solid var(--accent); display:flex; justify-content:space-between; align-items:center; }
+.header h1 { font-size:1.2rem; color:var(--accent); }
+.stats { display:flex; gap:20px; font-size:0.85rem; color:var(--muted); }
+.stats span { color:var(--gold); font-weight:bold; }
+.container { max-width:1000px; margin:0 auto; padding:20px; }
+.section { margin-bottom:24px; }
+.section-title { font-size:1rem; color:var(--gold); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; }
+.session-card { background:var(--card); border-radius:8px; margin-bottom:8px; overflow:hidden; }
+.session-header { padding:10px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-size:0.9rem; transition:background 0.2s; }
+.session-header:hover { background:rgba(255,255,255,0.05); }
+.session-id { color:var(--muted); font-size:0.8rem; font-family:monospace; }
+.session-count { background:var(--accent); color:white; border-radius:10px; padding:2px 8px; font-size:0.75rem; }
+.session-last { color:var(--muted); font-size:0.78rem; }
+.messages { display:none; padding:0 16px 16px; max-height:400px; overflow-y:auto; }
+.messages.open { display:block; }
+.msg { padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.88rem; line-height:1.5; }
+.msg .role { font-size:0.75rem; font-weight:bold; margin-bottom:2px; }
+.msg .role.user { color:#4fc3f7; }
+.msg .role.assistant { color:var(--accent); }
+.msg .time { font-size:0.7rem; color:var(--muted); float:right; }
+.msg .content { color:var(--text); }
+.empty { text-align:center; color:var(--muted); padding:40px; font-size:0.9rem; }
+.refresh-btn { padding:6px 16px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; }
+.refresh-btn:hover { opacity:0.85; }
+.tabs { display:flex; gap:8px; margin-bottom:16px; }
+.tab { padding:6px 16px; border-radius:4px; cursor:pointer; font-size:0.85rem; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); transition:all 0.2s; }
+.tab.active { background:var(--accent); color:white; border-color:var(--accent); }
+.tab:hover:not(.active) { border-color:var(--gold); color:var(--gold); }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔍 聊天监控面板</h1>
+  <div class="stats">
+    小鲸鱼: <span id="statWhale">-</span> 条 &nbsp; 铅笔骑士: <span id="statPencil">-</span> 条
+  </div>
+</div>
+<div class="container">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div class="tabs">
+      <button class="tab active" data-tab="all">全部</button>
+      <button class="tab" data-tab="whale">🐳 小鲸鱼聊天</button>
+      <button class="tab" data-tab="pencil">✏️ 铅笔骑士聊天</button>
+    </div>
+    <button class="refresh-btn" onclick="loadAll()">🔄 刷新</button>
+  </div>
+  <div class="section" id="content"></div>
+</div>
+<script>
+const ADMIN_TOKEN = 'pencil-admin-2025-secret';
+const API_BASE = '/api/admin';
+
+async function api(path) {
+  const res = await fetch(API_BASE + path, { headers: { 'x-admin-token': ADMIN_TOKEN } });
+  if (!res.ok) throw new Error(res.status);
+  return res.json();
+}
+
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('zh-CN', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+let currentTab = 'all';
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    currentTab = t.dataset.tab;
+    loadAll();
+  });
+});
+
+async function loadAll() {
+  const content = document.getElementById('content');
+  try {
+    const stats = await api('/stats');
+    document.getElementById('statWhale').textContent = stats.whaleMessages;
+    document.getElementById('statPencil').textContent = stats.pencilMessages;
+
+    let html = '';
+
+    if (currentTab === 'all' || currentTab === 'whale') {
+      const sessions = await api('/sessions?type=whale');
+      if (sessions.whale && sessions.whale.length > 0) {
+        html += '<div class="section-title">🐳 小鲸鱼 — 聊天记录</div>';
+        for (const sid of sessions.whale) {
+          const chat = await api('/chats/whale/' + sid);
+          const lastMsg = chat.messages[chat.messages.length - 1];
+          html += `<div class="session-card">
+            <div class="session-header" onclick="toggleMsgs(this)">
+              <div>
+                <span style="color:#4fc3f7;">🐳 小鲸鱼</span>
+                <span class="session-id">${sid}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span class="session-last">${lastMsg ? fmtTime(lastMsg.time) : '-'}</span>
+                <span class="session-count">${chat.messages.length}</span>
+              </div>
+            </div>
+            <div class="messages">${chat.messages.map(m => `
+              <div class="msg">
+                <span class="time">${fmtTime(m.time)}</span>
+                <div class="role ${m.role}">${m.role === 'user' ? '👤 用户' : '🐳 小鲸鱼AI'}</div>
+                <div class="content">${escHtml(m.content)}</div>
+              </div>`).join('')}</div>
+          </div>`;
+        }
+      }
+    }
+
+    if (currentTab === 'all' || currentTab === 'pencil') {
+      const sessions = await api('/sessions?type=pencil');
+      if (sessions.pencil && sessions.pencil.length > 0) {
+        html += '<div class="section-title">✏️ 铅笔骑士 — 聊天记录</div>';
+        for (const sid of sessions.pencil) {
+          const chat = await api('/chats/pencil/' + sid);
+          const lastMsg = chat.messages[chat.messages.length - 1];
+          html += `<div class="session-card">
+            <div class="session-header" onclick="toggleMsgs(this)">
+              <div>
+                <span style="color:var(--accent);">✏️ 铅笔骑士</span>
+                <span class="session-id">${sid}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span class="session-last">${lastMsg ? fmtTime(lastMsg.time) : '-'}</span>
+                <span class="session-count">${chat.messages.length}</span>
+              </div>
+            </div>
+            <div class="messages">${chat.messages.map(m => `
+              <div class="msg">
+                <span class="time">${fmtTime(m.time)}</span>
+                <div class="role ${m.role}">${m.role === 'user' ? '👤 用户' : '✏️ 铅笔骑士AI'}</div>
+                <div class="content">${escHtml(m.content)}</div>
+              </div>`).join('')}</div>
+          </div>`;
+        }
+      }
+    }
+
+    content.innerHTML = html || '<div class="empty">还没有聊天记录</div>';
+  } catch(e) {
+    content.innerHTML = '<div class="empty">加载失败，检查服务是否启动</div>';
+  }
+}
+
+function toggleMsgs(header) {
+  const msgs = header.nextElementSibling;
+  msgs.classList.toggle('open');
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+loadAll();
+setInterval(loadAll, 30000); // auto refresh every 30s
+</script>
+</body>
+</html>
