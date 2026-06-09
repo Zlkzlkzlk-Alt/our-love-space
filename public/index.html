@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>铅笔骑士 & 小鲸鱼 · 我们的空间</title>
+<title>瑟瑟瑟瑟铅笔骑士王王 & 瑟瑟瑟瑟小鲸鱼 · 我们的空间</title>
 <style>
 :root {
   --ocean-deep: #1a3a4a; --ocean-mid: #2c5f7c; --ocean-light: #8db5c9;
@@ -205,7 +205,7 @@ body {
   <section class="hero">
     <div class="hero-icon">✏️</div>
     <h1 class="hero-names">朱乐恺<span class="amp">&</span>许佳燕</h1>
-    <p class="hero-sub">铅笔骑士和他的小鲸鱼 🐳</p>
+    <p class="hero-sub">瑟瑟铅笔骑士王和他的瑟瑟小鲸鱼 🐳</p>
     <div class="day-counter">
       <span class="day-number" id="dayCount">…</span>
       <span class="day-label">天</span>
@@ -219,7 +219,7 @@ body {
     <button class="tab-btn" data-tab="photos">📷 照片墙</button>
     <button class="tab-btn" data-tab="wishes">🕯️ 许愿池</button>
     <button class="tab-btn" data-tab="qa">💬 问答</button>
-    <button class="tab-btn" data-tab="whale">🐳 小鲸鱼</button>
+    <button class="tab-btn" data-tab="whale">🐳 瑟瑟小鲸鱼</button>
   </nav>
 
   <!-- ═══════ TAB 1: STORY ═══════ -->
@@ -281,7 +281,7 @@ body {
         <input id="quizAnswer" placeholder="正确答案…" maxlength="100" style="width:100%;padding:10px;border:1px solid rgba(200,164,92,0.25);border-radius:10px;font-family:inherit;font-size:0.95rem;outline:none;">
         <label style="display:block;font-size:0.8rem;color:var(--ink-light);margin:8px 0 4px;">你是</label>
         <select id="quizAuthor" style="padding:8px 12px;border-radius:16px;border:1px solid rgba(0,0,0,0.12);font-family:inherit;font-size:0.95rem;">
-          <option value="LO">铅笔骑士</option><option value="小鲸鱼">小鲸鱼</option>
+          <option value="LO">瑟瑟铅笔骑士王</option><option value="小鲸鱼">瑟瑟小鲸鱼</option>
         </select>
         <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
           <button class="btn btn-outline" id="cancelQuiz">取消</button>
@@ -305,7 +305,7 @@ body {
         <textarea id="checkinContent" placeholder="比如：你觉得我们最近沟通得好吗？" maxlength="200" style="width:100%;padding:10px;border:1px solid rgba(200,164,92,0.25);border-radius:10px;font-family:inherit;font-size:0.95rem;min-height:60px;outline:none;"></textarea>
         <label style="display:block;font-size:0.8rem;color:var(--ink-light);margin:8px 0 4px;">你是</label>
         <select id="checkinAuthor" style="padding:8px 12px;border-radius:16px;border:1px solid rgba(0,0,0,0.12);font-family:inherit;font-size:0.95rem;">
-          <option value="LO">铅笔骑士</option><option value="小鲸鱼">小鲸鱼</option>
+          <option value="LO">瑟瑟铅笔骑士王</option><option value="小鲸鱼">瑟瑟小鲸鱼</option>
         </select>
         <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end;">
           <button class="btn btn-outline" id="cancelCheckin">取消</button>
@@ -321,7 +321,7 @@ body {
     <div class="whale-chat">
       <div class="whale-messages" id="whaleMessages">
         <div class="whale-msg whale">
-          <div class="who">🐳 小鲸鱼</div>
+          <div class="who">🐳 瑟瑟小鲸鱼</div>
           宝宝～你来找我啦🐳 今天有没有想我？
         </div>
       </div>
@@ -329,7 +329,7 @@ body {
         <div class="dots"><span></span><span></span><span></span></div>
       </div>
       <div class="whale-input-row">
-        <input type="text" id="whaleInput" placeholder="跟小鲸鱼说点什么…" maxlength="300">
+        <input type="text" id="whaleInput" placeholder="跟瑟瑟小鲸鱼说点什么…" maxlength="300">
         <button class="whale-send" id="whaleSend">🐳 发送</button>
       </div>
       <div style="text-align:center;">
@@ -554,7 +554,7 @@ photoInput.addEventListener('change', async e => {
     list.innerHTML = messages.map((m, i) => `
       <div class="msg-bubble" style="${m.from==='小鲸鱼'?'border-radius:14px 4px 14px 14px;background:rgba(141,181,201,0.08);':''}">
         <button class="msg-del" data-idx="${i}" title="删除">✕</button>
-        <div class="msg-from">${m.from==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>${esc(m.text)}<div class="msg-time">${fmtTime(m.createdAt)}</div>
+        <div class="msg-from">${m.from==='LO'?'✏️ 瑟瑟铅笔骑士王':'🐳 瑟瑟小鲸鱼'}</div>${esc(m.text)}<div class="msg-time">${fmtTime(m.createdAt)}</div>
       </div>`).join('');
     list.querySelectorAll('.msg-del').forEach(btn => {
       btn.addEventListener('click', async e => {
@@ -624,7 +624,7 @@ async function loadQuizList() {
       const answers = await api('/questions/' + q.id + '/answers');
       let ansHTML = answers.map(a => `
         <div class="qa-answer ${a.author==='LO'?'LO':'whale'}">
-          <div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>
+          <div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 瑟瑟铅笔骑士王':'🐳 瑟瑟小鲸鱼'}</div>
           ${esc(a.content)}<div class="t">${fmtTime(a.createdAt)}</div>
         </div>`).join('');
       const both = answers.some(a=>a.author==='LO') && answers.some(a=>a.author==='小鲸鱼');
@@ -637,7 +637,7 @@ async function loadQuizList() {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <span class="qa-type-tag tag-quiz">互相出题</span>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span class="qa-meta" style="margin:0;">${q.author==='LO'?'✏️ 铅笔骑士 出题':'🐳 小鲸鱼 出题'} · ${fmtTime(q.createdAt)}</span>
+            <span class="qa-meta" style="margin:0;">${q.author==='LO'?'✏️ 瑟瑟铅笔骑士王 出题':'🐳 瑟瑟小鲸鱼 出题'} · ${fmtTime(q.createdAt)}</span>
             <button class="qa-del-btn" data-qid="${q.id}" title="删除题目">✕</button>
           </div>
         </div>
@@ -645,7 +645,7 @@ async function loadQuizList() {
         <div class="qa-input-area">
           <textarea placeholder="写下你的回答…" rows="2"></textarea>
           <div class="qa-input-row">
-            <select class="awho"><option value="LO">我是 铅笔骑士</option><option value="小鲸鱼">我是 小鲸鱼</option></select>
+            <select class="awho"><option value="LO">我是 瑟瑟铅笔骑士王</option><option value="小鲸鱼">我是 瑟瑟小鲸鱼</option></select>
             <button class="btn btn-gold qa-submit" data-qid="${q.id}">提交</button>
           </div>
         </div>
@@ -687,11 +687,11 @@ async function loadDaily() {
         <span class="qa-type-tag tag-daily">每日一问</span><span class="qa-meta" style="margin:0;">${new Date().toLocaleDateString('zh-CN')}</span>
       </div>
       <div class="qa-q" style="font-size:1.05rem;">${esc(q.content)}</div>
-      ${ta.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}"><div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>${esc(a.content)}<div class="t">${fmtTime(a.createdAt)}</div></div>`).join('')}
+      ${ta.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}"><div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 瑟瑟铅笔骑士王':'🐳 瑟瑟小鲸鱼'}</div>${esc(a.content)}<div class="t">${fmtTime(a.createdAt)}</div></div>`).join('')}
       <div class="qa-input-area">
         <textarea placeholder="写下今天的回答…" rows="2"></textarea>
         <div class="qa-input-row">
-          <select class="awho"><option value="LO">我是 铅笔骑士</option><option value="小鲸鱼">我是 小鲸鱼</option></select>
+          <select class="awho"><option value="LO">我是 瑟瑟铅笔骑士王</option><option value="小鲸鱼">我是 瑟瑟小鲸鱼</option></select>
           <button class="btn btn-gold daily-submit" data-qid="${q.id}">提交</button>
         </div>
       </div></div>`;
@@ -708,7 +708,7 @@ async function loadDaily() {
     if (hist.length) {
       const g = {}; hist.forEach(a => { const d = new Date(a.createdAt).toLocaleDateString('zh-CN'); if (!g[d]) g[d] = { q: a.questionContent, as: [] }; g[d].as.push(a); });
       hc.innerHTML = '<h3 style="margin-top:20px;margin-bottom:10px;color:var(--ocean-mid);font-size:0.9rem;">📜 最近的每日记录</h3>' +
-        Object.entries(g).slice(0,14).map(([d, v]) => `<div class="qa-card" style="padding:14px 16px;"><div class="qa-meta">${d}</div><div style="font-size:0.88rem;margin:4px 0;">${esc(v.q)}</div>${v.as.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}" style="margin-top:6px;"><b style="font-size:0.8rem;">${a.author==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</b> ${esc(a.content)}</div>`).join('')}</div>`).join('');
+        Object.entries(g).slice(0,14).map(([d, v]) => `<div class="qa-card" style="padding:14px 16px;"><div class="qa-meta">${d}</div><div style="font-size:0.88rem;margin:4px 0;">${esc(v.q)}</div>${v.as.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}" style="margin-top:6px;"><b style="font-size:0.8rem;">${a.author==='LO'?'✏️ 瑟瑟铅笔骑士王':'🐳 瑟瑟小鲸鱼'}</b> ${esc(a.content)}</div>`).join('')}</div>`).join('');
     }
   } catch(e) { qc.innerHTML = '<div class="timeline-empty">加载失败</div>'; }
 }
@@ -749,11 +749,11 @@ async function loadCheckinList() {
         </div>
         <div class="qa-q">${esc(q.content)}</div>
         ${both ? '<div style="font-size:0.8rem;color:var(--rose);margin-bottom:8px;">🌹 两个人都已回答</div>' : answers.length===1 ? '<div style="font-size:0.8rem;color:var(--ink-light);margin-bottom:8px;">等待另一半的回答…</div>' : ''}
-        ${answers.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}"><div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 铅笔骑士':'🐳 小鲸鱼'}</div>${esc(a.content)}<div class="t">${fmtTime(a.createdAt)}</div></div>`).join('')}
+        ${answers.map(a => `<div class="qa-answer ${a.author==='LO'?'LO':'whale'}"><div class="who ${a.author==='LO'?'lo':'wh'}">${a.author==='LO'?'✏️ 瑟瑟铅笔骑士王':'🐳 瑟瑟小鲸鱼'}</div>${esc(a.content)}<div class="t">${fmtTime(a.createdAt)}</div></div>`).join('')}
         <div class="qa-input-area">
           <textarea placeholder="写下你的真心话…" rows="3"></textarea>
           <div class="qa-input-row">
-            <select class="awho"><option value="LO">我是 铅笔骑士</option><option value="小鲸鱼">我是 小鲸鱼</option></select>
+            <select class="awho"><option value="LO">我是 瑟瑟铅笔骑士王</option><option value="小鲸鱼">我是 瑟瑟小鲸鱼</option></select>
             <button class="btn btn-gold checkin-submit" data-qid="${q.id}">提交</button>
           </div>
         </div>
@@ -794,7 +794,7 @@ async function loadCheckinList() {
   function addMsg(role, text) {
     const div = document.createElement('div');
     div.className = 'whale-msg ' + (role === 'LO' ? 'lo' : 'whale');
-    div.innerHTML = `<div class="who">${role === 'LO' ? '✏️ 铅笔骑士' : '🐳 小鲸鱼'}</div>${esc(text)}`;
+    div.innerHTML = `<div class="who">${role === 'LO' ? '✏️ 瑟瑟铅笔骑士王' : '🐳 瑟瑟小鲸鱼'}</div>${esc(text)}`;
     list.appendChild(div);
     list.scrollTop = list.scrollHeight;
   }
@@ -813,7 +813,7 @@ async function loadCheckinList() {
       addMsg('whale', data.reply);
     } catch (e) {
       typing.style.display = 'none';
-      addMsg('whale', '（小鲸鱼睡着了…轻轻打呼💤 宝宝等一下再找她好不好）');
+      addMsg('whale', '（瑟瑟小鲸鱼睡着了…轻轻打呼💤 宝宝等一下再找她好不好）');
     }
     sending = false;
   }
@@ -822,11 +822,11 @@ async function loadCheckinList() {
   input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
   resetBtn.addEventListener('click', async () => {
-    if (!confirm('确定重置对话吗？小鲸鱼会忘记刚才聊的所有内容 🫧')) return;
+    if (!confirm('确定重置对话吗？瑟瑟小鲸鱼会忘记刚才聊的所有内容 🫧')) return;
     try { await api('/whale/reset', { method: 'POST', body: JSON.stringify({ sessionId }) }); } catch(e) {}
     sessionId = 'whale_' + Date.now();
     localStorage.setItem('whale_sid', sessionId);
-    list.innerHTML = `<div class="whale-msg whale"><div class="who">🐳 小鲸鱼</div>宝宝～你来找我啦🐳 今天有没有想我？</div>`;
+    list.innerHTML = `<div class="whale-msg whale"><div class="who">🐳 瑟瑟小鲸鱼</div>宝宝～你来找我啦🐳 今天有没有想我？</div>`;
     toast('记忆已重置 🫧');
   });
 })();
