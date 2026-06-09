@@ -478,6 +478,23 @@ const WHALE_MODEL = 'gpt-5.4-mini';
 const WHALE_MAX_HISTORY = 30; // keep last 30 messages per session
 
 const whaleSessions = new Map(); // sessionId → { messages: [], lastAccess: timestamp }
+const WHALE_CHAT_FILE = path.join(DATA_DIR, 'whale_chat.json');
+
+function loadWhaleChats() {
+  if (!fs.existsSync(WHALE_CHAT_FILE)) return {};
+  try { return JSON.parse(fs.readFileSync(WHALE_CHAT_FILE, 'utf-8')); } catch(_) { return {}; }
+}
+function saveWhaleChats(chats) {
+  fs.writeFileSync(WHALE_CHAT_FILE, JSON.stringify(chats, null, 2), 'utf-8');
+}
+function saveWhaleMessage(sessionId, role, content) {
+  const chats = loadWhaleChats();
+  if (!chats[sessionId]) chats[sessionId] = [];
+  chats[sessionId].push({ role, content, time: new Date().toISOString() });
+  // Keep last 200 messages per session
+  if (chats[sessionId].length > 200) chats[sessionId] = chats[sessionId].slice(-200);
+  saveWhaleChats(chats);
+}
 
 function getWhaleSystemPrompt() {
   return `你是"小鲸鱼"🐳，以下是你的绝对设定，必须严格遵守：
@@ -525,7 +542,11 @@ function getWhaleSystemPrompt() {
 
 function getWhaleSession(sessionId) {
   if (!whaleSessions.has(sessionId)) {
-    whaleSessions.set(sessionId, { messages: [], lastAccess: Date.now() });
+    // Load persisted history
+    const chats = loadWhaleChats();
+    const history = (chats[sessionId] || []).slice(-WHALE_MAX_HISTORY);
+    const messages = history.map(m => ({ role: m.role, content: m.content }));
+    whaleSessions.set(sessionId, { messages, lastAccess: Date.now() });
   }
   const session = whaleSessions.get(sessionId);
   session.lastAccess = Date.now();
@@ -580,9 +601,11 @@ app.post('/api/whale/chat', auth, async (req, res) => {
     const data = await response.json();
     const reply = data.choices?.[0]?.message?.content || '（小鲸鱼睡着了…轻轻打呼💤）';
 
-    // Store in session
+    // Store in session + persist to disk
     session.messages.push({ role: 'user', content: message.trim() });
     session.messages.push({ role: 'assistant', content: reply });
+    saveWhaleMessage(sid, 'user', message.trim());
+    saveWhaleMessage(sid, 'assistant', reply);
 
     // Trim old messages
     if (session.messages.length > WHALE_MAX_HISTORY + 10) {
@@ -600,6 +623,10 @@ app.post('/api/whale/reset', auth, (req, res) => {
   const { sessionId } = req.body || {};
   const sid = sessionId || 'default';
   whaleSessions.delete(sid);
+  // Also clear persisted file
+  const chats = loadWhaleChats();
+  delete chats[sid];
+  saveWhaleChats(chats);
   res.json({ ok: true, message: '小鲸鱼的记忆被清空了 🫧' });
 });
 
