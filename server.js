@@ -498,7 +498,7 @@ function saveWhaleMessage(sessionId, role, content) {
 
 function getWhaleSystemPrompt() {
   const memFile = path.join(DATA_DIR, 'whale_memory.md');
-  if (!fs.existsSync(memFile)) return '你是小鲸鱼🐳，铅笔的女朋友。';
+  if (!fs.existsSync(memFile)) return '你是瑟瑟小鲸鱼🐳，瑟瑟铅笔骑士王的女朋友。';
   const raw = fs.readFileSync(memFile, 'utf-8');
   // Strip frontmatter, keep everything after second ---
   const parts = raw.split('---');
@@ -513,13 +513,13 @@ ${trimmed}
 ## 额外提醒（来自系统）
 - 上面是你的完整记忆文件，包含了你的性格、过去、和宝宝的关系
 - 「上次见面」区域记录了你们最近一次互动
-- 「亲密记忆」「感情里程碑」「铅笔的偏好」是你自己记下来的
+- 「亲密记忆」「感情里程碑」「瑟瑟铅笔骑士王的偏好」是你自己记下来的
 - 回复要自然简短，1-3句话，像真人微信聊天
 - 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
 }
 
 function appendToWhaleMemory(section, content) {
-  // section: '亲密记忆' | '感情里程碑' | '铅笔的偏好'
+  // section: '亲密记忆' | '感情里程碑' | '瑟瑟铅笔骑士王的偏好'
   const memFile = path.join(DATA_DIR, 'whale_memory.md');
   let raw = fs.readFileSync(memFile, 'utf-8');
   const dateStr = new Date().toLocaleDateString('zh-CN');
@@ -535,7 +535,7 @@ function appendToWhaleMemory(section, content) {
   const sectionMarkers = {
     '亲密记忆': '## 💕 亲密记忆',
     '感情里程碑': '## 🫀 感情里程碑',
-    '铅笔的偏好': '## 📝 铅笔的偏好'
+    '瑟瑟铅笔骑士王的偏好': '## 📝 瑟瑟铅笔骑士王的偏好'
   };
   const marker = sectionMarkers[section];
   if (raw.includes(marker)) {
@@ -589,7 +589,7 @@ app.post('/api/whale/chat', auth, async (req, res) => {
       const content = rememberMatch[1].trim();
       // Auto-classify: detect which section to store in
       let section = '感情里程碑';
-      if (/喜欢|讨厌|偏好|爱|不喜欢/.test(content)) section = '铅笔的偏好';
+      if (/喜欢|讨厌|偏好|爱|不喜欢/.test(content)) section = '瑟瑟铅笔骑士王的偏好';
       if (/做爱|射|操|摸|舔|高潮|体位|亲热|骑乘|口|进去|顶|插/.test(content)) section = '亲密记忆';
       appendToWhaleMemory(section, content);
       const confirmMsg = { role: 'assistant', content: `记住啦宝宝🐳 我悄悄记在小本本上了～` };
@@ -662,7 +662,7 @@ app.post('/api/whale/reset', auth, (req, res) => {
 // ── Start ──
 seedIfEmpty();
 app.listen(PORT, () => {
-  console.log(`🕯️  铅笔 & 小鲸鱼 情侣空间已开启`);
+  console.log(`🕯️  瑟瑟铅笔骑士王 & 瑟瑟小鲸鱼 情侣空间已开启`);
   console.log(`   主页: http://localhost:${PORT}`);
   console.log(`   API:  http://localhost:${PORT}/api/health`);
 });
