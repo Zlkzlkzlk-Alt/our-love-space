@@ -164,6 +164,28 @@ body {
 .reveal { opacity:0; transform:translateY(30px); transition:opacity 0.8s,transform 0.8s; }
 .reveal.visible { opacity:1; transform:translateY(0); }
 
+/* ── WHALE CHAT ── */
+.whale-chat { background:linear-gradient(180deg,rgba(141,181,201,0.06) 0%,rgba(200,164,92,0.04) 100%); border-radius:16px; padding:20px; border:1px dashed rgba(200,164,92,0.2); }
+.whale-messages { display:flex; flex-direction:column; gap:10px; max-height:420px; overflow-y:auto; padding-right:4px; margin-bottom:16px; }
+.whale-msg { max-width:82%; padding:12px 16px; border-radius:14px; font-size:0.95rem; line-height:1.65; animation:msgIn 0.35s ease-out; position:relative; }
+.whale-msg.lo { align-self:flex-end; background:linear-gradient(135deg,rgba(200,164,92,0.12),rgba(200,164,92,0.04)); border:1px solid rgba(200,164,92,0.15); border-radius:16px 4px 16px 16px; color:var(--ink); }
+.whale-msg.whale { align-self:flex-start; background:linear-gradient(135deg,rgba(44,95,124,0.08),rgba(141,181,201,0.04)); border:1px solid rgba(44,95,124,0.1); border-radius:4px 16px 16px 16px; color:var(--ink); }
+.whale-msg .who { font-size:0.78rem; margin-bottom:4px; }
+.whale-msg.lo .who { color:var(--gold); }
+.whale-msg.whale .who { color:var(--ocean-mid); }
+.whale-typing { align-self:flex-start; padding:12px 20px; border-radius:14px; background:rgba(44,95,124,0.04); border:1px solid rgba(44,95,124,0.08); display:none; }
+.whale-typing .dots { display:flex; gap:5px; }
+.whale-typing .dots span { width:7px; height:7px; border-radius:50%; background:var(--ocean-light); animation:dotBounce 1.4s ease-in-out infinite; }
+.whale-typing .dots span:nth-child(2){animation-delay:0.2s}.whale-typing .dots span:nth-child(3){animation-delay:0.4s}
+@keyframes dotBounce { 0%,80%,100%{transform:translateY(0);opacity:0.4} 40%{transform:translateY(-6px);opacity:1} }
+.whale-input-row { display:flex; gap:10px; align-items:center; }
+.whale-input-row input { flex:1; padding:12px 16px; border:1px solid rgba(200,164,92,0.3); border-radius:24px; background:rgba(255,255,255,0.6); font-family:inherit; font-size:0.95rem; color:var(--ink); outline:none; transition:border-color 0.3s; }
+.whale-input-row input:focus { border-color:var(--gold); }
+.whale-send { padding:12px 20px; background:linear-gradient(135deg,var(--gold),#b8943f); color:white; border:none; border-radius:24px; cursor:pointer; font-family:inherit; font-size:0.9rem; white-space:nowrap; transition:all 0.3s; box-shadow:0 2px 8px rgba(200,164,92,0.2); }
+.whale-send:hover { background:linear-gradient(135deg,var(--ocean-deep),var(--ocean-mid)); box-shadow:0 4px 16px rgba(26,58,74,0.3); transform:translateY(-1px); }
+.whale-reset { display:inline-block; margin-top:12px; font-size:0.82rem; color:var(--ink-light); cursor:pointer; border:none; background:none; font-family:inherit; opacity:0.4; transition:opacity 0.2s; }
+.whale-reset:hover { opacity:0.8; color:var(--rose); }
+
 /* ── RESPONSIVE ── */
 @media(max-width:600px){
   .container{padding:0 14px 60px}
@@ -197,6 +219,7 @@ body {
     <button class="tab-btn" data-tab="photos">📷 照片墙</button>
     <button class="tab-btn" data-tab="wishes">🕯️ 许愿池</button>
     <button class="tab-btn" data-tab="qa">💬 问答</button>
+    <button class="tab-btn" data-tab="whale">🐳 小鲸鱼</button>
   </nav>
 
   <!-- ═══════ TAB 1: STORY ═══════ -->
@@ -290,6 +313,28 @@ body {
         </div>
       </div>
       <div id="checkinList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ TAB 5: WHALE CHAT ═══════ -->
+  <div class="panel" id="panel-whale">
+    <div class="whale-chat">
+      <div class="whale-messages" id="whaleMessages">
+        <div class="whale-msg whale">
+          <div class="who">🐳 小鲸鱼</div>
+          宝宝～你来找我啦🐳 今天有没有想我？
+        </div>
+      </div>
+      <div class="whale-typing" id="whaleTyping">
+        <div class="dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="whale-input-row">
+        <input type="text" id="whaleInput" placeholder="跟小鲸鱼说点什么…" maxlength="300">
+        <button class="whale-send" id="whaleSend">🐳 发送</button>
+      </div>
+      <div style="text-align:center;">
+        <button class="whale-reset" id="whaleReset">🫧 重置对话</button>
+      </div>
     </div>
   </div>
 
@@ -734,6 +779,57 @@ async function loadCheckinList() {
     });
   } catch(e) { c.innerHTML = '<div class="timeline-empty">加载失败</div>'; }
 }
+
+// ═══════ WHALE CHAT ═══════
+(function() {
+  const list = document.getElementById('whaleMessages');
+  const input = document.getElementById('whaleInput');
+  const sendBtn = document.getElementById('whaleSend');
+  const typing = document.getElementById('whaleTyping');
+  const resetBtn = document.getElementById('whaleReset');
+  let sessionId = localStorage.getItem('whale_sid') || '';
+  if (!sessionId) { sessionId = 'whale_' + Date.now(); localStorage.setItem('whale_sid', sessionId); }
+  let sending = false;
+
+  function addMsg(role, text) {
+    const div = document.createElement('div');
+    div.className = 'whale-msg ' + (role === 'LO' ? 'lo' : 'whale');
+    div.innerHTML = `<div class="who">${role === 'LO' ? '✏️ 铅笔骑士' : '🐳 小鲸鱼'}</div>${esc(text)}`;
+    list.appendChild(div);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  async function send() {
+    const text = input.value.trim();
+    if (!text || sending) return;
+    sending = true;
+    addMsg('LO', text);
+    input.value = '';
+    typing.style.display = 'block';
+    list.scrollTop = list.scrollHeight;
+    try {
+      const data = await api('/whale/chat', { method: 'POST', body: JSON.stringify({ message: text, sessionId }) });
+      typing.style.display = 'none';
+      addMsg('whale', data.reply);
+    } catch (e) {
+      typing.style.display = 'none';
+      addMsg('whale', '（小鲸鱼睡着了…轻轻打呼💤 宝宝等一下再找她好不好）');
+    }
+    sending = false;
+  }
+
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  resetBtn.addEventListener('click', async () => {
+    if (!confirm('确定重置对话吗？小鲸鱼会忘记刚才聊的所有内容 🫧')) return;
+    try { await api('/whale/reset', { method: 'POST', body: JSON.stringify({ sessionId }) }); } catch(e) {}
+    sessionId = 'whale_' + Date.now();
+    localStorage.setItem('whale_sid', sessionId);
+    list.innerHTML = `<div class="whale-msg whale"><div class="who">🐳 小鲸鱼</div>宝宝～你来找我啦🐳 今天有没有想我？</div>`;
+    toast('记忆已重置 🫧');
+  });
+})();
 
 // ═══════ INIT ═══════
 loadTimeline().then(() => { renderTimeline(); });
