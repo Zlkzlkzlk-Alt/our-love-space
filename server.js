@@ -13,11 +13,22 @@ const SECRET = 'our-little-secret-2025';
 app.use(cors());
 app.use(express.json({ limit: '200mb' }));
 
-// ── Serve frontend ──
+// ── Serve frontend (no cache) ──
+const NO_CACHE = {
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0'
+};
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.set(NO_CACHE);
+  res.sendFile(path.join(__dirname, 'public', 'index.html'), { etag: false, lastModified: false, cacheControl: false });
 });
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  lastModified: false,
+  cacheControl: false,
+  setHeaders: (res) => { res.set(NO_CACHE); }
+}));
 // Serve photos from D drive
 app.get('/photos/:filename', auth, (req, res) => {
   res.sendFile(path.join(PHOTOS_DIR, req.params.filename));
@@ -657,6 +668,194 @@ app.post('/api/whale/reset', auth, (req, res) => {
   delete chats[sid];
   saveWhaleChats(chats);
   res.json({ ok: true, message: '小鲸鱼的记忆被清空了 🫧' });
+});
+
+// ═══════ 铅笔骑士 AI 聊天 ═══════
+const PENCIL_API_KEY = 'sk-3af78bcc26c04f889b1e54361e4a571d';
+const PENCIL_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const PENCIL_MODEL = 'deepseek-v4-flash';
+const PENCIL_MAX_HISTORY = 30;
+
+const pencilSessions = new Map();
+const PENCIL_CHAT_FILE = path.join(DATA_DIR, 'pencil_chat.json');
+
+function loadPencilChats() {
+  if (!fs.existsSync(PENCIL_CHAT_FILE)) return {};
+  try { return JSON.parse(fs.readFileSync(PENCIL_CHAT_FILE, 'utf-8')); } catch(_) { return {}; }
+}
+function savePencilChats(chats) {
+  fs.writeFileSync(PENCIL_CHAT_FILE, JSON.stringify(chats, null, 2), 'utf-8');
+}
+function savePencilMessage(sessionId, role, content) {
+  const chats = loadPencilChats();
+  if (!chats[sessionId]) chats[sessionId] = [];
+  chats[sessionId].push({ role, content, time: new Date().toISOString() });
+  if (chats[sessionId].length > 200) chats[sessionId] = chats[sessionId].slice(-200);
+  savePencilChats(chats);
+}
+
+function getPencilSystemPrompt() {
+  const memFile = path.join(DATA_DIR, 'pencil_memory.md');
+  if (!fs.existsSync(memFile)) return '你是瑟瑟铅笔骑士王✏️，瑟瑟小鲸鱼🐳的男朋友。';
+  const raw = fs.readFileSync(memFile, 'utf-8');
+  const parts = raw.split('---');
+  const body = parts.length >= 3 ? parts.slice(2).join('---') : raw;
+  const trimmed = body.trim();
+  return `你是"瑟瑟铅笔骑士王"✏️，以下是你的完整人物设定、记忆和规则。你必须严格遵守，永远不打破角色。
+
+${trimmed}
+
+## 额外提醒（来自系统）
+- 上面是你的完整记忆文件，包含了你的性格、过去、和宝宝的关系
+- 「你对她的了解」区域记录了你对她的认识
+- 「偏好」是你自己记下来的
+- 回复要自然简短，1-3句话，像真人微信聊天
+- 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
+}
+
+function appendToPencilMemory(section, content) {
+  const memFile = path.join(DATA_DIR, 'pencil_memory.md');
+  let raw = fs.readFileSync(memFile, 'utf-8');
+  const dateStr = new Date().toLocaleDateString('zh-CN');
+  let entry;
+  if (section === '亲密记忆') {
+    entry = `\n### ${dateStr} — 宝宝说的\n- 场景：聊天中\n- 过程：宝宝告诉我：${content}\n- 我的感受：记下来了✏️\n- 小笔记：下次聊天可以提起来`;
+  } else if (section === '感情里程碑') {
+    entry = `\n### ${dateStr} — 来自聊天\n- ${content}`;
+  } else {
+    entry = `\n- ${content}`;
+  }
+  const sectionMarkers = {
+    '亲密记忆': '## 💕 亲密记忆',
+    '感情里程碑': '## 🫀 感情里程碑',
+    '瑟瑟铅笔骑士王的偏好': '## 📝 瑟瑟铅笔骑士王的偏好'
+  };
+  const marker = sectionMarkers[section];
+  if (raw.includes(marker)) {
+    const idx = raw.indexOf(marker) + marker.length;
+    const nextIdx = raw.indexOf('\n## ', idx);
+    if (nextIdx > idx) {
+      raw = raw.slice(0, nextIdx) + entry + '\n' + raw.slice(nextIdx);
+    } else {
+      raw = raw.slice(0, idx) + entry + '\n\n' + raw.slice(idx);
+    }
+  }
+  fs.writeFileSync(memFile, raw, 'utf-8');
+}
+
+function getPencilSession(sessionId) {
+  if (!pencilSessions.has(sessionId)) {
+    const chats = loadPencilChats();
+    const history = (chats[sessionId] || []).slice(-PENCIL_MAX_HISTORY);
+    const messages = history.map(m => ({ role: m.role, content: m.content }));
+    pencilSessions.set(sessionId, { messages, lastAccess: Date.now() });
+  }
+  const session = pencilSessions.get(sessionId);
+  session.lastAccess = Date.now();
+  return session;
+}
+
+setInterval(() => {
+  const cutoff = Date.now() - 3600000;
+  for (const [id, s] of pencilSessions) {
+    if (s.lastAccess < cutoff) pencilSessions.delete(id);
+  }
+}, 3600000);
+
+app.post('/api/pencil/chat', auth, async (req, res) => {
+  try {
+    const { message, sessionId } = req.body;
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return res.status(400).json({ error: 'message required' });
+    }
+
+    const sid = sessionId || 'default';
+    const session = getPencilSession(sid);
+    const msg = message.trim();
+
+    // Handle /记住 command
+    const rememberMatch = msg.match(/^\/记住\s+(.+)/);
+    if (rememberMatch) {
+      const content = rememberMatch[1].trim();
+      let section = '感情里程碑';
+      if (/喜欢|讨厌|偏好|爱|不喜欢/.test(content)) section = '瑟瑟铅笔骑士王的偏好';
+      if (/做爱|射|操|摸|舔|高潮|体位|亲热|骑乘|口|进去|顶|插/.test(content)) section = '亲密记忆';
+      appendToPencilMemory(section, content);
+      const confirmMsg = { role: 'assistant', content: '记住啦宝宝✏️ 刻在骑士日记里了～' };
+      session.messages.push({ role: 'user', content: msg });
+      session.messages.push(confirmMsg);
+      savePencilMessage(sid, 'user', msg);
+      savePencilMessage(sid, 'assistant', confirmMsg.content);
+      return res.json({ reply: confirmMsg.content, sessionId: sid });
+    }
+
+    const apiMessages = [
+      { role: 'system', content: getPencilSystemPrompt() },
+      ...session.messages.slice(-PENCIL_MAX_HISTORY),
+      { role: 'user', content: msg }
+    ];
+
+    const response = await fetch(PENCIL_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${PENCIL_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: PENCIL_MODEL,
+        messages: apiMessages,
+        temperature: 0.85,
+        max_tokens: 300
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error('[Pencil] API error:', response.status, err);
+      return res.status(502).json({ error: 'pencil service unavailable' });
+    }
+
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || '（铅笔骑士睡着了…笔都掉了✏️💤）';
+
+    session.messages.push({ role: 'user', content: message.trim() });
+    session.messages.push({ role: 'assistant', content: reply });
+    savePencilMessage(sid, 'user', message.trim());
+    savePencilMessage(sid, 'assistant', reply);
+
+    if (session.messages.length > PENCIL_MAX_HISTORY + 10) {
+      session.messages = session.messages.slice(-PENCIL_MAX_HISTORY);
+    }
+
+    res.json({ reply, sessionId: sid });
+  } catch (err) {
+    console.error('[Pencil] Error:', err.message);
+    res.status(500).json({ error: 'internal error' });
+  }
+});
+
+app.post('/api/pencil/reset', auth, (req, res) => {
+  const { sessionId } = req.body || {};
+  const sid = sessionId || 'default';
+  pencilSessions.delete(sid);
+  const chats = loadPencilChats();
+  delete chats[sid];
+  savePencilChats(chats);
+  res.json({ ok: true, message: '铅笔骑士的记忆被清空了 ✏️' });
+});
+
+// ═══════ DELETE question ═══════
+app.delete('/api/questions/:id', auth, (req, res) => {
+  let questions = readData('questions.json');
+  const before = questions.length;
+  questions = questions.filter(q => q.id !== req.params.id);
+  if (questions.length === before) return res.status(404).json({ error: 'not found' });
+  writeData('questions.json', questions);
+  // Also delete related answers
+  let answers = readData('answers.json');
+  answers = answers.filter(a => a.questionId !== req.params.id);
+  writeData('answers.json', answers);
+  res.json({ deleted: true });
 });
 
 // ── Start ──

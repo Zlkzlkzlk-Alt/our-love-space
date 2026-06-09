@@ -220,6 +220,7 @@ body {
     <button class="tab-btn" data-tab="wishes">🕯️ 许愿池</button>
     <button class="tab-btn" data-tab="qa">💬 问答</button>
     <button class="tab-btn" data-tab="whale">🐳 瑟瑟小鲸鱼</button>
+    <button class="tab-btn" data-tab="pencil">✏️ 瑟瑟铅笔骑士</button>
   </nav>
 
   <!-- ═══════ TAB 1: STORY ═══════ -->
@@ -334,6 +335,28 @@ body {
       </div>
       <div style="text-align:center;">
         <button class="whale-reset" id="whaleReset">🫧 重置对话</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ TAB 6: PENCIL CHAT ═══════ -->
+  <div class="panel" id="panel-pencil">
+    <div class="whale-chat">
+      <div class="whale-messages" id="pencilMessages">
+        <div class="whale-msg whale">
+          <div class="who">✏️ 瑟瑟铅笔骑士王</div>
+          宝宝～你的骑士在这儿呢 ✏️ 今天想我了没？
+        </div>
+      </div>
+      <div class="whale-typing" id="pencilTyping">
+        <div class="dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="whale-input-row">
+        <input type="text" id="pencilInput" placeholder="跟瑟瑟铅笔骑士说点什么…" maxlength="300">
+        <button class="whale-send" id="pencilSend">✏️ 发送</button>
+      </div>
+      <div style="text-align:center;">
+        <button class="whale-reset" id="pencilReset">🫧 重置对话</button>
       </div>
     </div>
   </div>
@@ -828,6 +851,57 @@ async function loadCheckinList() {
     localStorage.setItem('whale_sid', sessionId);
     list.innerHTML = `<div class="whale-msg whale"><div class="who">🐳 瑟瑟小鲸鱼</div>宝宝～你来找我啦🐳 今天有没有想我？</div>`;
     toast('记忆已重置 🫧');
+  });
+})();
+
+// ═══════ PENCIL CHAT ═══════
+(function() {
+  const list = document.getElementById('pencilMessages');
+  const input = document.getElementById('pencilInput');
+  const sendBtn = document.getElementById('pencilSend');
+  const typing = document.getElementById('pencilTyping');
+  const resetBtn = document.getElementById('pencilReset');
+  let sessionId = localStorage.getItem('pencil_sid') || '';
+  if (!sessionId) { sessionId = 'pencil_' + Date.now(); localStorage.setItem('pencil_sid', sessionId); }
+  let sending = false;
+
+  function addMsg(role, text) {
+    const div = document.createElement('div');
+    div.className = 'whale-msg ' + (role === 'LO' ? 'lo' : 'whale');
+    div.innerHTML = `<div class="who">${role === 'LO' ? '你' : '✏️ 瑟瑟铅笔骑士王'}</div>${esc(text)}`;
+    list.appendChild(div);
+    list.scrollTop = list.scrollHeight;
+  }
+
+  async function send() {
+    const text = input.value.trim();
+    if (!text || sending) return;
+    sending = true;
+    addMsg('LO', text);
+    input.value = '';
+    typing.style.display = 'block';
+    list.scrollTop = list.scrollHeight;
+    try {
+      const data = await api('/pencil/chat', { method: 'POST', body: JSON.stringify({ message: text, sessionId }) });
+      typing.style.display = 'none';
+      addMsg('whale', data.reply);
+    } catch (e) {
+      typing.style.display = 'none';
+      addMsg('whale', '（铅笔骑士睡着了…笔都掉了✏️💤 宝宝等一下再找他好不好）');
+    }
+    sending = false;
+  }
+
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  resetBtn.addEventListener('click', async () => {
+    if (!confirm('确定重置对话吗？铅笔骑士会忘记刚才聊的所有内容 ✏️')) return;
+    try { await api('/pencil/reset', { method: 'POST', body: JSON.stringify({ sessionId }) }); } catch(e) {}
+    sessionId = 'pencil_' + Date.now();
+    localStorage.setItem('pencil_sid', sessionId);
+    list.innerHTML = `<div class="whale-msg whale"><div class="who">✏️ 瑟瑟铅笔骑士王</div>宝宝～你的骑士在这儿呢 ✏️ 今天想我了没？</div>`;
+    toast('记忆已重置 ✏️');
   });
 })();
 
