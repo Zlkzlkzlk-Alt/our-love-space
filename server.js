@@ -898,6 +898,77 @@ app.get('/api/admin/stats', authAdmin, (req, res) => {
   });
 });
 
+// Admin: unified message feed across all sessions (chronological)
+app.get('/api/admin/feed', authAdmin, (req, res) => {
+  const { type, limit, offset } = req.query;
+  const whaleChats = loadWhaleChats();
+  const pencilChats = loadPencilChats();
+  let allMessages = [];
+
+  if (!type || type === 'whale') {
+    for (const [sid, msgs] of Object.entries(whaleChats)) {
+      msgs.forEach(m => allMessages.push({ ...m, sessionId: sid, chatType: 'whale', character: '🐳 小鲸鱼' }));
+    }
+  }
+  if (!type || type === 'pencil') {
+    for (const [sid, msgs] of Object.entries(pencilChats)) {
+      msgs.forEach(m => allMessages.push({ ...m, sessionId: sid, chatType: 'pencil', character: '✏️ 铅笔骑士' }));
+    }
+  }
+
+  allMessages.sort((a, b) => new Date(b.time) - new Date(a.time));
+  const total = allMessages.length;
+  const off = parseInt(offset) || 0;
+  const lim = parseInt(limit) || 200;
+  allMessages = allMessages.slice(off, off + lim);
+
+  res.json({ total, offset: off, limit: lim, messages: allMessages });
+});
+
+// Admin: daily report summary
+app.get('/api/admin/report', authAdmin, (req, res) => {
+  const whaleChats = loadWhaleChats();
+  const pencilChats = loadPencilChats();
+  let allMessages = [];
+
+  for (const [sid, msgs] of Object.entries(whaleChats)) {
+    msgs.forEach(m => allMessages.push({ ...m, sessionId: sid, chatType: 'whale', character: '🐳 小鲸鱼' }));
+  }
+  for (const [sid, msgs] of Object.entries(pencilChats)) {
+    msgs.forEach(m => allMessages.push({ ...m, sessionId: sid, chatType: 'pencil', character: '✏️ 铅笔骑士' }));
+  }
+
+  allMessages.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+  // Group by date
+  const byDate = {};
+  const userMsgs = allMessages.filter(m => m.role === 'user');
+  const aiMsgs = allMessages.filter(m => m.role === 'assistant');
+
+  allMessages.forEach(m => {
+    const date = new Date(m.time).toLocaleDateString('zh-CN');
+    if (!byDate[date]) byDate[date] = { total: 0, user: 0, assistant: 0, sexy: 0 };
+    byDate[date].total++;
+    if (m.role === 'user') byDate[date].user++;
+    else byDate[date].assistant++;
+  });
+
+  // Detect sexy content
+  const SEXY_WORDS = /想操|想要|操你|操我|想舔|想亲|想抱|想要你|好想要|睡不着|刚洗完|躺下|床上|洗澡|梦到|从后面|抱住|耳边|硬了|湿了|亲你|摸你|脱|裸|做爱|上床|高潮|射|里面|进去|骑|体位|呻吟|喘|舒服|口|舔你|吃你|骚|色色|瑟瑟|深了|轻点|重点|停|操|插|顶|射了|到了/;
+  const sexyCount = allMessages.filter(m => SEXY_WORDS.test(m.content)).length;
+
+  res.json({
+    totalMessages: allMessages.length,
+    userMessages: userMsgs.length,
+    aiMessages: aiMsgs.length,
+    sexyMessages: sexyCount,
+    firstMessage: allMessages[allMessages.length - 1]?.time || null,
+    lastMessage: allMessages[0]?.time || null,
+    byDate,
+    recentMessages: allMessages.slice(0, 20)
+  });
+});
+
 // ═══════ DELETE question ═══════
 app.delete('/api/questions/:id', auth, (req, res) => {
   let questions = readData('questions.json');
