@@ -344,9 +344,8 @@ function runCleanup() {
   cleanupOldSessions(PENCIL_CHAT_FILE, MAX_SESSION_MESSAGES, SESSION_TTL_DAYS, MAX_CHAT_FILE_SIZE);
 }
 
-// Run cleanup on startup and every 6 hours
-runCleanup();
-setInterval(runCleanup, 6 * 3600000);
+// Cleanup will be scheduled after WHALE_CHAT_FILE/PENCIL_CHAT_FILE are defined
+let _cleanupScheduled = false;
 
 // ═══════ Seed data ═══════
 function seedIfEmpty() {
@@ -1047,6 +1046,13 @@ app.delete('/api/questions/:id', auth, (req, res) => {
 
 // ── Start ──
 seedIfEmpty();
+// Schedule auto-cleanup (must be after WHALE_CHAT_FILE and PENCIL_CHAT_FILE are defined)
+if (!_cleanupScheduled) {
+  _cleanupScheduled = true;
+  runCleanup();
+  setInterval(runCleanup, 6 * 3600000);
+}
+
 app.listen(PORT, () => {
   console.log(`🕯️  瑟瑟铅笔骑士王 & 瑟瑟小鲸鱼 情侣空间已开启`);
   console.log(`   主页: http://localhost:${PORT}`);
