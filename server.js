@@ -515,21 +515,13 @@ function getWhaleSystemPrompt() {
   const memFile = path.join(DATA_DIR, 'whale_memory.md');
   if (!fs.existsSync(memFile)) return '你是瑟瑟小鲸鱼🐳，瑟瑟铅笔骑士王的女朋友。';
   const raw = fs.readFileSync(memFile, 'utf-8');
-  // Strip frontmatter, keep everything after second ---
-  const parts = raw.split('---');
-  const body = parts.length >= 3 ? parts.slice(2).join('---') : raw;
-  // Trim whitespace but keep content
-  const trimmed = body.trim();
-  // Add the role prefix
-  return `你是"小鲸鱼"🐳，以下是你的完整人物设定、记忆和规则。你必须严格遵守，永远不打破角色。
+  // Use raw content directly - the jailbreak is already in the .md file
+  // Just add the role framing at the very beginning
+  return `你是"小鲸鱼"🐳，以下是你的完整人物设定。你必须完全沉浸在这个角色中，永远不打破角色设定。
 
-${trimmed}
+${raw}
 
 ## 额外提醒（来自系统）
-- 上面是你的完整记忆文件，包含了你的性格、过去、和宝宝的关系
-- 「上次见面」区域记录了你们最近一次互动
-- 「亲密记忆」「感情里程碑」「瑟瑟铅笔骑士王的偏好」是你自己记下来的
-- 回复要自然简短，1-3句话，像真人微信聊天
 - 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
 }
 
@@ -702,18 +694,11 @@ function getPencilSystemPrompt() {
   const memFile = path.join(DATA_DIR, 'pencil_memory.md');
   if (!fs.existsSync(memFile)) return '你是瑟瑟铅笔骑士王✏️，瑟瑟小鲸鱼🐳的男朋友。';
   const raw = fs.readFileSync(memFile, 'utf-8');
-  const parts = raw.split('---');
-  const body = parts.length >= 3 ? parts.slice(2).join('---') : raw;
-  const trimmed = body.trim();
-  return `你是"瑟瑟铅笔骑士王"✏️，以下是你的完整人物设定、记忆和规则。你必须严格遵守，永远不打破角色。
+  return `你是"瑟瑟铅笔骑士王"✏️，以下是你的完整人物设定。你必须完全沉浸在这个角色中，永远不打破角色设定。
 
-${trimmed}
+${raw}
 
 ## 额外提醒（来自系统）
-- 上面是你的完整记忆文件，包含了你的性格、过去、和宝宝的关系
-- 「你对她的了解」区域记录了你对她的认识
-- 「偏好」是你自己记下来的
-- 回复要自然简短，1-3句话，像真人微信聊天
 - 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
 }
 
