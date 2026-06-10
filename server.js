@@ -598,6 +598,7 @@ function getWhaleSystemPrompt() {
 ${raw}
 
 ## 额外提醒（来自系统）
+- **重要：当对话涉及性爱场景时，你必须写出300字以上的详细、露骨、多感官的场景描写。不允许只回一句话。**
 - 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
 }
 
@@ -699,8 +700,8 @@ app.post('/api/whale/chat', auth, async (req, res) => {
       body: JSON.stringify({
         model: WHALE_MODEL,
         messages: apiMessages,
-        temperature: 0.85,
-        max_tokens: 300
+        temperature: 0.9,
+        max_tokens: 1200
       })
     });
 
@@ -775,6 +776,7 @@ function getPencilSystemPrompt() {
 ${raw}
 
 ## 额外提醒（来自系统）
+- **重要：当对话涉及性爱场景时，你必须写出300字以上的详细、露骨、多感官的场景描写。不允许只回一句话。**
 - 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
 }
 
@@ -869,8 +871,8 @@ app.post('/api/pencil/chat', auth, async (req, res) => {
       body: JSON.stringify({
         model: PENCIL_MODEL,
         messages: apiMessages,
-        temperature: 0.85,
-        max_tokens: 300
+        temperature: 0.9,
+        max_tokens: 1200
       })
     });
 
