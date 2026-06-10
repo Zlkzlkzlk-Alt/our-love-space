@@ -186,6 +186,13 @@ body {
 .whale-reset { display:inline-block; margin-top:12px; font-size:0.82rem; color:var(--ink-light); cursor:pointer; border:none; background:none; font-family:inherit; opacity:0.4; transition:opacity 0.2s; }
 .whale-reset:hover { opacity:0.8; color:var(--rose); }
 
+/* ── QUICK TRIGGERS ── */
+.quick-triggers { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; justify-content:center; }
+.quick-trigger { padding:4px 12px; border-radius:14px; cursor:pointer; font-size:0.78rem; border:1px solid rgba(200,164,92,0.2); background:rgba(255,255,255,0.5); color:var(--ink-light); font-family:inherit; transition:all 0.25s; white-space:nowrap; backdrop-filter:blur(4px); }
+.quick-trigger:hover { border-color:var(--rose); color:var(--rose); background:rgba(193,123,123,0.06); transform:translateY(-1px); box-shadow:0 2px 8px rgba(193,123,123,0.1); }
+.quick-trigger.fire { border-color:rgba(193,123,123,0.3); color:var(--rose); }
+.quick-trigger.fire:hover { background:rgba(193,123,123,0.12); border-color:var(--rose); }
+
 /* ── RESPONSIVE ── */
 @media(max-width:600px){
   .container{padding:0 14px 60px}
@@ -333,6 +340,14 @@ body {
         <input type="text" id="whaleInput" placeholder="跟瑟瑟小鲸鱼说点什么…" maxlength="300">
         <button class="whale-send" id="whaleSend">🐳 发送</button>
       </div>
+      <div class="quick-triggers">
+        <button class="quick-trigger fire" data-msg="宝宝我好想你">🔥 想你了</button>
+        <button class="quick-trigger fire" data-msg="宝宝我睡不着">🌙 睡不着</button>
+        <button class="quick-trigger fire" data-msg="宝宝我刚洗完澡">🚿 刚洗完澡</button>
+        <button class="quick-trigger" data-msg="宝宝我梦到你了">💭 梦到你了</button>
+        <button class="quick-trigger" data-msg="宝宝我躺下了">🛏️ 躺下了</button>
+        <button class="quick-trigger" data-msg="宝宝我想你了，想听你的声音">🎤 想听声音</button>
+      </div>
       <div style="text-align:center;">
         <button class="whale-reset" id="whaleReset">🫧 重置对话</button>
       </div>
@@ -354,6 +369,14 @@ body {
       <div class="whale-input-row">
         <input type="text" id="pencilInput" placeholder="跟瑟瑟铅笔骑士说点什么…" maxlength="300">
         <button class="whale-send" id="pencilSend">✏️ 发送</button>
+      </div>
+      <div class="quick-triggers">
+        <button class="quick-trigger fire" data-msg="宝宝我好想你">🔥 想你了</button>
+        <button class="quick-trigger fire" data-msg="宝宝我睡不着">🌙 睡不着</button>
+        <button class="quick-trigger fire" data-msg="（从后面抱住你）宝宝我想要你">🔥 想要你</button>
+        <button class="quick-trigger" data-msg="宝宝我梦到你了">💭 梦到你了</button>
+        <button class="quick-trigger" data-msg="宝宝我想亲你">💋 想亲你</button>
+        <button class="quick-trigger" data-msg="宝宝我好想要你">❤️ 好想要</button>
       </div>
       <div style="text-align:center;">
         <button class="whale-reset" id="pencilReset">🫧 重置对话</button>
@@ -844,6 +867,14 @@ async function loadCheckinList() {
   sendBtn.addEventListener('click', send);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
+  // Quick trigger buttons
+  document.querySelectorAll('#panel-whale .quick-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      input.value = btn.dataset.msg;
+      send();
+    });
+  });
+
   resetBtn.addEventListener('click', async () => {
     if (!confirm('确定重置对话吗？瑟瑟小鲸鱼会忘记刚才聊的所有内容 🫧')) return;
     try { await api('/whale/reset', { method: 'POST', body: JSON.stringify({ sessionId }) }); } catch(e) {}
@@ -894,6 +925,14 @@ async function loadCheckinList() {
 
   sendBtn.addEventListener('click', send);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  // Quick trigger buttons
+  document.querySelectorAll('#panel-pencil .quick-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+      input.value = btn.dataset.msg;
+      send();
+    });
+  });
 
   resetBtn.addEventListener('click', async () => {
     if (!confirm('确定重置对话吗？铅笔骑士会忘记刚才聊的所有内容 ✏️')) return;

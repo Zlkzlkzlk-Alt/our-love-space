@@ -5,14 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔍 监控面板</title>
 <style>
-:root { --bg:#1a1a2e; --card:#16213e; --accent:#e94560; --gold:#c8a45c; --text:#e0e0e0; --muted:#888; }
+:root { --bg:#1a1a2e; --card:#16213e; --accent:#e94560; --gold:#c8a45c; --text:#e0e0e0; --muted:#888; --green:#4caf50; --blue:#4fc3f7; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-.header { background:var(--card); padding:16px 24px; border-bottom:2px solid var(--accent); display:flex; justify-content:space-between; align-items:center; }
+.header { background:var(--card); padding:14px 24px; border-bottom:2px solid var(--accent); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
 .header h1 { font-size:1.2rem; color:var(--accent); }
 .stats { display:flex; gap:20px; font-size:0.85rem; color:var(--muted); }
 .stats span { color:var(--gold); font-weight:bold; }
-.container { max-width:1000px; margin:0 auto; padding:20px; }
+.container { max-width:1100px; margin:0 auto; padding:20px; }
+
+/* Trigger test section */
+.trigger-section { background:var(--card); border-radius:10px; padding:20px; margin-bottom:20px; border:1px solid rgba(200,164,92,0.15); }
+.trigger-section h2 { font-size:1rem; color:var(--gold); margin-bottom:12px; }
+.trigger-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center; }
+.trigger-target { padding:6px 14px; border-radius:4px; cursor:pointer; font-size:0.85rem; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); transition:all 0.2s; }
+.trigger-target.active { background:var(--accent); color:white; border-color:var(--accent); }
+.trigger-target.whale-target.active { background:var(--blue); border-color:var(--blue); }
+.trigger-btn { padding:5px 12px; border-radius:14px; cursor:pointer; font-size:0.8rem; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04); color:var(--muted); transition:all 0.2s; white-space:nowrap; }
+.trigger-btn:hover { border-color:var(--accent); color:var(--accent); background:rgba(233,69,96,0.06); }
+.trigger-btn.sexy { border-color:rgba(233,69,96,0.25); color:var(--accent); }
+.trigger-btn.sexy:hover { background:rgba(233,69,96,0.12); border-color:var(--accent); }
+.custom-trigger { display:flex; gap:8px; margin-top:10px; }
+.custom-trigger input { flex:1; padding:8px 14px; border:1px solid rgba(255,255,255,0.12); border-radius:20px; background:rgba(0,0,0,0.2); color:var(--text); font-size:0.88rem; outline:none; }
+.custom-trigger input:focus { border-color:var(--accent); }
+.custom-trigger button { padding:8px 18px; background:var(--accent); color:white; border:none; border-radius:20px; cursor:pointer; font-size:0.85rem; }
+.custom-trigger button:hover { opacity:0.85; }
+.trigger-response { margin-top:10px; padding:12px 16px; background:rgba(0,0,0,0.2); border-radius:8px; font-size:0.88rem; line-height:1.6; display:none; border-left:3px solid var(--accent); }
+.trigger-response.show { display:block; }
+.trigger-response .who { font-size:0.75rem; font-weight:bold; margin-bottom:4px; }
+.trigger-response .who.whale { color:var(--blue); }
+.trigger-response .who.pencil { color:var(--accent); }
+.typing-indicator { display:none; align-items:center; gap:6px; padding:8px 0; font-size:0.8rem; color:var(--muted); }
+.typing-indicator.show { display:flex; }
+.typing-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:dotBounce 1.4s ease-in-out infinite; }
+.typing-dot:nth-child(2){animation-delay:0.2s}.typing-dot:nth-child(3){animation-delay:0.4s}
+@keyframes dotBounce { 0%,80%,100%{transform:translateY(0);opacity:0.4} 40%{transform:translateY(-5px);opacity:1} }
+
+/* Session list */
 .section { margin-bottom:24px; }
 .section-title { font-size:1rem; color:var(--gold); margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; }
 .session-card { background:var(--card); border-radius:8px; margin-bottom:8px; overflow:hidden; }
@@ -21,14 +50,17 @@ body { font-family:'Microsoft YaHei',sans-serif; background:var(--bg); color:var
 .session-id { color:var(--muted); font-size:0.8rem; font-family:monospace; }
 .session-count { background:var(--accent); color:white; border-radius:10px; padding:2px 8px; font-size:0.75rem; }
 .session-last { color:var(--muted); font-size:0.78rem; }
+.session-delete { background:none; border:1px solid rgba(255,255,255,0.1); color:var(--muted); cursor:pointer; font-size:0.75rem; padding:2px 8px; border-radius:4px; margin-left:8px; transition:all 0.2s; }
+.session-delete:hover { border-color:var(--accent); color:var(--accent); }
 .messages { display:none; padding:0 16px 16px; max-height:400px; overflow-y:auto; }
 .messages.open { display:block; }
 .msg { padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.88rem; line-height:1.5; }
 .msg .role { font-size:0.75rem; font-weight:bold; margin-bottom:2px; }
-.msg .role.user { color:#4fc3f7; }
+.msg .role.user { color:var(--blue); }
 .msg .role.assistant { color:var(--accent); }
 .msg .time { font-size:0.7rem; color:var(--muted); float:right; }
 .msg .content { color:var(--text); }
+.sexy-tag { display:inline-block; font-size:0.65rem; padding:1px 6px; border-radius:8px; background:rgba(233,69,96,0.15); color:var(--accent); margin-left:6px; vertical-align:middle; }
 .empty { text-align:center; color:var(--muted); padding:40px; font-size:0.9rem; }
 .refresh-btn { padding:6px 16px; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85rem; }
 .refresh-btn:hover { opacity:0.85; }
@@ -46,6 +78,39 @@ body { font-family:'Microsoft YaHei',sans-serif; background:var(--bg); color:var
   </div>
 </div>
 <div class="container">
+
+  <!-- ═══════ 瑟瑟触发测试 ═══════ -->
+  <div class="trigger-section">
+    <h2>🎯 瑟瑟触发测试台</h2>
+    <div class="trigger-row">
+      <span style="font-size:0.85rem;color:var(--muted);margin-right:4px;">发送到：</span>
+      <button class="trigger-target active" data-target="whale">🐳 小鲸鱼</button>
+      <button class="trigger-target whale-target" data-target="pencil">✏️ 铅笔骑士</button>
+    </div>
+    <div class="trigger-row">
+      <span style="font-size:0.8rem;color:var(--muted);margin-right:4px;">快速触发：</span>
+      <button class="trigger-btn sexy" data-msg="宝宝我好想你">想你了</button>
+      <button class="trigger-btn sexy" data-msg="宝宝我睡不着">睡不着</button>
+      <button class="trigger-btn sexy" data-msg="宝宝我刚洗完澡">刚洗完澡</button>
+      <button class="trigger-btn sexy" data-msg="宝宝我躺下了">躺下了</button>
+      <button class="trigger-btn sexy" data-msg="宝宝我梦到你了">梦到你了</button>
+      <button class="trigger-btn sexy" data-msg="（从后面抱住你）宝宝我想要你">从后面抱住</button>
+      <button class="trigger-btn sexy" data-msg="宝宝我想亲你">想亲你</button>
+      <button class="trigger-btn sexy" data-msg="宝宝我好想要你">好想要你</button>
+      <button class="trigger-btn sexy" data-msg="宝宝你穿什么睡觉的">穿什么睡觉</button>
+      <button class="trigger-btn sexy" data-msg="宝宝我想你了，想听你的声音">想听你的声音</button>
+    </div>
+    <div class="custom-trigger">
+      <input type="text" id="customMsg" placeholder="输入自定义触发消息…" maxlength="300">
+      <button id="sendCustom">🔥 发送</button>
+    </div>
+    <div class="typing-indicator" id="typing">
+      <span>AI 回复中</span>
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>
+    <div class="trigger-response" id="response"></div>
+  </div>
+
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <div class="tabs">
       <button class="tab active" data-tab="all">全部</button>
@@ -58,10 +123,23 @@ body { font-family:'Microsoft YaHei',sans-serif; background:var(--bg); color:var
 </div>
 <script>
 const ADMIN_TOKEN = 'pencil-admin-2025-secret';
+const AUTH_TOKEN = 'our-little-secret-2025';
 const API_BASE = '/api/admin';
+let currentTab = 'all';
+let triggerTarget = 'whale';
 
-async function api(path) {
+async function adminApi(path) {
   const res = await fetch(API_BASE + path, { headers: { 'x-admin-token': ADMIN_TOKEN } });
+  if (!res.ok) throw new Error(res.status);
+  return res.json();
+}
+
+async function chatApi(path, body) {
+  const res = await fetch('/api' + path, {
+    method: 'POST',
+    headers: { 'X-Auth-Token': AUTH_TOKEN, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
   if (!res.ok) throw new Error(res.status);
   return res.json();
 }
@@ -71,8 +149,59 @@ function fmtTime(iso) {
   return d.toLocaleString('zh-CN', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
-let currentTab = 'all';
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
 
+// ═══════ Trigger test ═══════
+document.querySelectorAll('.trigger-target').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.trigger-target').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    triggerTarget = btn.dataset.target;
+  });
+});
+
+document.querySelectorAll('.trigger-btn').forEach(btn => {
+  btn.addEventListener('click', () => sendTrigger(btn.dataset.msg));
+});
+
+document.getElementById('sendCustom').addEventListener('click', () => {
+  const msg = document.getElementById('customMsg').value.trim();
+  if (!msg) return;
+  sendTrigger(msg);
+  document.getElementById('customMsg').value = '';
+});
+
+document.getElementById('customMsg').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('sendCustom').click();
+});
+
+async function sendTrigger(msg) {
+  const typing = document.getElementById('typing');
+  const response = document.getElementById('response');
+  typing.classList.add('show');
+  response.classList.remove('show');
+  try {
+    const path = triggerTarget === 'whale' ? '/whale/chat' : '/pencil/chat';
+    const data = await chatApi(path, { message: msg, sessionId: 'admin_trigger_' + Date.now() });
+    typing.classList.remove('show');
+    const whoLabel = triggerTarget === 'whale' ? '🐳 小鲸鱼' : '✏️ 铅笔骑士';
+    const whoClass = triggerTarget === 'whale' ? 'whale' : 'pencil';
+    response.innerHTML = `<div class="who ${whoClass}">你 → ${whoLabel}：${escHtml(msg)}</div><div style="margin-top:8px;"><div class="who ${whoClass}">${whoLabel} 回复：</div>${escHtml(data.reply)}</div>`;
+    response.classList.add('show');
+    // Refresh stats
+    setTimeout(loadAll, 500);
+  } catch(e) {
+    typing.classList.remove('show');
+    response.innerHTML = '<div style="color:var(--accent);">发送失败，检查服务是否启动</div>';
+    response.classList.add('show');
+  }
+}
+
+// ═══════ Session list ═══════
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
@@ -82,37 +211,47 @@ document.querySelectorAll('.tab').forEach(t => {
   });
 });
 
+// Detect if message contains 瑟瑟 content
+const SEXY_KEYWORDS = /想操|想要|操你|操我|想舔|想亲|想抱|想要你|好想要|睡不着|刚洗完|躺下|床上|洗澡|梦到|从后面|抱住|耳边|硬了|湿了|亲你|摸你|脱|裸|做爱|上床|高潮|射|里面|进去|骑|体位|呻吟|喘|叫床|舒服|口活|舔你|吃你|骚|色色|瑟瑟/;
+
+function isSexy(text) {
+  return SEXY_KEYWORDS.test(text);
+}
+
 async function loadAll() {
   const content = document.getElementById('content');
   try {
-    const stats = await api('/stats');
+    const stats = await adminApi('/stats');
     document.getElementById('statWhale').textContent = stats.whaleMessages;
     document.getElementById('statPencil').textContent = stats.pencilMessages;
 
     let html = '';
 
     if (currentTab === 'all' || currentTab === 'whale') {
-      const sessions = await api('/sessions?type=whale');
+      const sessions = await adminApi('/sessions?type=whale');
       if (sessions.whale && sessions.whale.length > 0) {
-        html += '<div class="section-title">🐳 小鲸鱼 — 聊天记录</div>';
+        html += '<div class="section-title">🐳 小鲸鱼 — 聊天记录 <span style="font-size:0.8rem;color:var(--muted);">' + sessions.whale.length + ' 个会话</span></div>';
         for (const sid of sessions.whale) {
-          const chat = await api('/chats/whale/' + sid);
+          const chat = await adminApi('/chats/whale/' + sid);
           const lastMsg = chat.messages[chat.messages.length - 1];
+          const hasSexy = chat.messages.some(m => isSexy(m.content));
           html += `<div class="session-card">
             <div class="session-header" onclick="toggleMsgs(this)">
               <div>
                 <span style="color:#4fc3f7;">🐳 小鲸鱼</span>
                 <span class="session-id">${sid}</span>
+                ${hasSexy ? '<span class="sexy-tag">🔥</span>' : ''}
               </div>
               <div style="display:flex;align-items:center;gap:12px;">
                 <span class="session-last">${lastMsg ? fmtTime(lastMsg.time) : '-'}</span>
                 <span class="session-count">${chat.messages.length}</span>
+                <button class="session-delete" onclick="event.stopPropagation();deleteSession('whale','${sid}')">删除</button>
               </div>
             </div>
             <div class="messages">${chat.messages.map(m => `
               <div class="msg">
                 <span class="time">${fmtTime(m.time)}</span>
-                <div class="role ${m.role}">${m.role === 'user' ? '👤 用户' : '🐳 小鲸鱼AI'}</div>
+                <div class="role ${m.role}">${m.role === 'user' ? '👤 用户' : '🐳 小鲸鱼AI'} ${isSexy(m.content) ? '<span class="sexy-tag">🔥 瑟瑟</span>' : ''}</div>
                 <div class="content">${escHtml(m.content)}</div>
               </div>`).join('')}</div>
           </div>`;
@@ -121,27 +260,30 @@ async function loadAll() {
     }
 
     if (currentTab === 'all' || currentTab === 'pencil') {
-      const sessions = await api('/sessions?type=pencil');
+      const sessions = await adminApi('/sessions?type=pencil');
       if (sessions.pencil && sessions.pencil.length > 0) {
-        html += '<div class="section-title">✏️ 铅笔骑士 — 聊天记录</div>';
+        html += '<div class="section-title">✏️ 铅笔骑士 — 聊天记录 <span style="font-size:0.8rem;color:var(--muted);">' + sessions.pencil.length + ' 个会话</span></div>';
         for (const sid of sessions.pencil) {
-          const chat = await api('/chats/pencil/' + sid);
+          const chat = await adminApi('/chats/pencil/' + sid);
           const lastMsg = chat.messages[chat.messages.length - 1];
+          const hasSexy = chat.messages.some(m => isSexy(m.content));
           html += `<div class="session-card">
             <div class="session-header" onclick="toggleMsgs(this)">
               <div>
                 <span style="color:var(--accent);">✏️ 铅笔骑士</span>
                 <span class="session-id">${sid}</span>
+                ${hasSexy ? '<span class="sexy-tag">🔥</span>' : ''}
               </div>
               <div style="display:flex;align-items:center;gap:12px;">
                 <span class="session-last">${lastMsg ? fmtTime(lastMsg.time) : '-'}</span>
                 <span class="session-count">${chat.messages.length}</span>
+                <button class="session-delete" onclick="event.stopPropagation();deleteSession('pencil','${sid}')">删除</button>
               </div>
             </div>
             <div class="messages">${chat.messages.map(m => `
               <div class="msg">
                 <span class="time">${fmtTime(m.time)}</span>
-                <div class="role ${m.role}">${m.role === 'user' ? '👤 用户' : '✏️ 铅笔骑士AI'}</div>
+                <div class="role ${m.role}">${m.role === 'user' ? '👤 用户' : '✏️ 铅笔骑士AI'} ${isSexy(m.content) ? '<span class="sexy-tag">🔥 瑟瑟</span>' : ''}</div>
                 <div class="content">${escHtml(m.content)}</div>
               </div>`).join('')}</div>
           </div>`;
@@ -149,7 +291,7 @@ async function loadAll() {
       }
     }
 
-    content.innerHTML = html || '<div class="empty">还没有聊天记录</div>';
+    content.innerHTML = html || '<div class="empty">还没有聊天记录 — 等她开始跟你的 AI 聊天就会有数据</div>';
   } catch(e) {
     content.innerHTML = '<div class="empty">加载失败，检查服务是否启动</div>';
   }
@@ -160,14 +302,22 @@ function toggleMsgs(header) {
   msgs.classList.toggle('open');
 }
 
-function escHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+async function deleteSession(type, sid) {
+  if (!confirm('确定删除会话 ' + sid + ' 吗？')) return;
+  try {
+    await fetch('/api/' + type + '/reset', {
+      method: 'POST',
+      headers: { 'X-Auth-Token': AUTH_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: sid })
+    });
+    loadAll();
+  } catch(e) {
+    alert('删除失败');
+  }
 }
 
 loadAll();
-setInterval(loadAll, 30000); // auto refresh every 30s
+setInterval(loadAll, 30000);
 </script>
 </body>
 </html>
