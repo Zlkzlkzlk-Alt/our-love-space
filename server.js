@@ -289,6 +289,65 @@ app.get('/api/stats', auth, (req, res) => {
   });
 });
 
+// ═══════ Auto-cleanup old sessions ═══════
+function cleanupOldSessions(chatFile, maxMessages, ttlDays, maxSize) {
+  if (!fs.existsSync(chatFile)) return;
+  try {
+    const chats = JSON.parse(fs.readFileSync(chatFile, 'utf-8'));
+    const cutoff = Date.now() - ttlDays * 86400000;
+    let totalCleaned = 0;
+
+    for (const [sid, msgs] of Object.entries(chats)) {
+      if (!Array.isArray(msgs) || msgs.length === 0) {
+        delete chats[sid];
+        totalCleaned++;
+        continue;
+      }
+      // Trim old messages within session
+      if (msgs.length > maxMessages) {
+        chats[sid] = msgs.slice(-maxMessages);
+      }
+      // Remove sessions older than TTL
+      const lastMsgTime = new Date(msgs[msgs.length - 1].time).getTime();
+      if (lastMsgTime < cutoff) {
+        delete chats[sid];
+        totalCleaned++;
+      }
+    }
+
+    // If total file would exceed maxSize, remove oldest sessions
+    const tempJson = JSON.stringify(chats);
+    if (Buffer.byteLength(tempJson, 'utf-8') > maxSize) {
+      const sorted = Object.entries(chats).sort((a, b) => {
+        const aLast = a[1][a[1].length - 1]?.time || '0';
+        const bLast = b[1][b[1].length - 1]?.time || '0';
+        return new Date(aLast) - new Date(bLast);
+      });
+      while (sorted.length > 0 && Buffer.byteLength(JSON.stringify(Object.fromEntries(sorted)), 'utf-8') > maxSize) {
+        sorted.shift();
+        totalCleaned++;
+      }
+      const slimmed = Object.fromEntries(sorted);
+      fs.writeFileSync(chatFile, JSON.stringify(slimmed, null, 2), 'utf-8');
+    } else {
+      fs.writeFileSync(chatFile, tempJson, 'utf-8');
+    }
+
+    if (totalCleaned > 0) console.log(`[Cleanup] ${chatFile}: removed ${totalCleaned} old sessions`);
+  } catch(e) {
+    console.error(`[Cleanup] Error cleaning ${chatFile}:`, e.message);
+  }
+}
+
+function runCleanup() {
+  cleanupOldSessions(WHALE_CHAT_FILE, MAX_SESSION_MESSAGES, SESSION_TTL_DAYS, MAX_CHAT_FILE_SIZE);
+  cleanupOldSessions(PENCIL_CHAT_FILE, MAX_SESSION_MESSAGES, SESSION_TTL_DAYS, MAX_CHAT_FILE_SIZE);
+}
+
+// Run cleanup on startup and every 6 hours
+runCleanup();
+setInterval(runCleanup, 6 * 3600000);
+
 // ═══════ Seed data ═══════
 function seedIfEmpty() {
   if (!fs.existsSync(path.join(DATA_DIR, 'timeline.json'))) {
@@ -505,7 +564,10 @@ app.get('/api/health', (req, res) => {
 const WHALE_API_KEY = 'sk-3af78bcc26c04f889b1e54361e4a571d';
 const WHALE_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const WHALE_MODEL = 'deepseek-v4-flash';
-const WHALE_MAX_HISTORY = 30; // keep last 30 messages per session
+const WHALE_MAX_HISTORY = 30; // keep last 30 messages per API call
+const MAX_SESSION_MESSAGES = 100; // max stored per session
+const MAX_CHAT_FILE_SIZE = 10 * 1024 * 1024; // 10MB total per chat file
+const SESSION_TTL_DAYS = 30; // auto-delete sessions older than this
 
 const whaleSessions = new Map(); // sessionId → { messages: [], lastAccess: timestamp }
 const WHALE_CHAT_FILE = path.join(DATA_DIR, 'whale_chat.json');
@@ -522,7 +584,7 @@ function saveWhaleMessage(sessionId, role, content) {
   if (!chats[sessionId]) chats[sessionId] = [];
   chats[sessionId].push({ role, content, time: new Date().toISOString() });
   // Keep last 200 messages per session
-  if (chats[sessionId].length > 200) chats[sessionId] = chats[sessionId].slice(-200);
+  if (chats[sessionId].length > MAX_SESSION_MESSAGES) chats[sessionId] = chats[sessionId].slice(-MAX_SESSION_MESSAGES);
   saveWhaleChats(chats);
 }
 
@@ -701,7 +763,7 @@ function savePencilMessage(sessionId, role, content) {
   const chats = loadPencilChats();
   if (!chats[sessionId]) chats[sessionId] = [];
   chats[sessionId].push({ role, content, time: new Date().toISOString() });
-  if (chats[sessionId].length > 200) chats[sessionId] = chats[sessionId].slice(-200);
+  if (chats[sessionId].length > MAX_SESSION_MESSAGES) chats[sessionId] = chats[sessionId].slice(-MAX_SESSION_MESSAGES);
   savePencilChats(chats);
 }
 
