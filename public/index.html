@@ -876,15 +876,30 @@ async function loadCheckinList() {
     });
   });
 
-  // Dream button - uses selected mode + random scene
-  document.getElementById('whaleDreamBtn').addEventListener('click', () => {
+  // Dream button - silently sets mode then triggers random scene
+  document.getElementById('whaleDreamBtn').addEventListener('click', async () => {
+    if (sending) return;
+    sending = true;
     const modeCmd = whaleMode === 'gentle' ? '/温柔' : '/粗暴';
-    const scenes = ['/梦境', '/床上', '/浴室', '/公园', '/酒店', '/后入', '/骑乘', '/口交', '/足交', '/中出', '/厨房', '/沙发', '/镜子前', '/车内'];
-    const scene = scenes[Math.floor(Math.random() * scenes.length)];
-    input.value = modeCmd;
-    send();
-    setTimeout(() => { input.value = scene; send(); }, 3000);
-    toast('🌌 进入梦境：' + (whaleMode === 'gentle' ? '💙温柔' : '🔥粗暴') + ' × ' + scene);
+    toast('🌌 进入' + (whaleMode === 'gentle' ? '💙温柔' : '🔥粗暴') + '梦境...');
+    try {
+      // Silently set mode
+      await fetch(API_BASE + '/whale/chat', {
+        method: 'POST',
+        headers: { 'X-Auth-Token': AUTH, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: modeCmd, sessionId })
+      });
+      // Silently trigger random scene
+      typing.style.display = 'block';
+      list.scrollTop = list.scrollHeight;
+      const data = await api('/whale/chat', { method: 'POST', body: JSON.stringify({ message: '/random', sessionId }) });
+      typing.style.display = 'none';
+      addMsg('whale', data.reply);
+    } catch (e) {
+      typing.style.display = 'none';
+      addMsg('whale', '（瑟瑟小鲸鱼睡着了…轻轻打呼💤）');
+    }
+    sending = false;
   });
 
   resetBtn.addEventListener('click', async () => {
@@ -949,15 +964,30 @@ async function loadCheckinList() {
     });
   });
 
-  // Dream button - uses selected mode + random scene
-  document.getElementById('pencilDreamBtn').addEventListener('click', () => {
+  // Dream button - silently sets mode then triggers random scene
+  document.getElementById('pencilDreamBtn').addEventListener('click', async () => {
+    if (sending) return;
+    sending = true;
     const modeCmd = pencilMode === 'gentle' ? '/温柔' : '/粗暴';
-    const scenes = ['/梦境', '/床上', '/浴室', '/公园', '/酒店', '/后入', '/骑乘', '/口交', '/足交', '/中出', '/厨房', '/沙发', '/镜子前', '/车内'];
-    const scene = scenes[Math.floor(Math.random() * scenes.length)];
-    input.value = modeCmd;
-    send();
-    setTimeout(() => { input.value = scene; send(); }, 3000);
-    toast('🌌 进入梦境：' + (pencilMode === 'gentle' ? '💙温柔' : '🔥粗暴') + ' × ' + scene);
+    toast('🌌 进入' + (pencilMode === 'gentle' ? '💙温柔' : '🔥粗暴') + '梦境...');
+    try {
+      // Silently set mode
+      await fetch(API_BASE + '/pencil/chat', {
+        method: 'POST',
+        headers: { 'X-Auth-Token': AUTH, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: modeCmd, sessionId })
+      });
+      // Silently trigger random scene
+      typing.style.display = 'block';
+      list.scrollTop = list.scrollHeight;
+      const data = await api('/pencil/chat', { method: 'POST', body: JSON.stringify({ message: '/random', sessionId }) });
+      typing.style.display = 'none';
+      addMsg('whale', data.reply);
+    } catch (e) {
+      typing.style.display = 'none';
+      addMsg('whale', '（铅笔骑士睡着了…笔都掉了✏️💤）');
+    }
+    sending = false;
   });
 
   resetBtn.addEventListener('click', async () => {

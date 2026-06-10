@@ -737,9 +737,18 @@ app.post('/api/whale/chat', auth, async (req, res) => {
       '/车内': '你和宝宝在车里。也许停在某个僻静的地方，车窗起了雾。空间很小但很刺激。请详细描写在车里的亲密——狭小空间里的身体纠缠。400字以上。',
     };
     let sceneTrigger = null;
-    for (const [key, val] of Object.entries(SCENE_TRIGGERS)) {
-      if (msg.startsWith(key) || msg.includes(key)) { sceneTrigger = val; break; }
+
+    // /random: pick a random scene using current mode
+    if (msg === '/random') {
+      const sceneKeys = Object.keys(SCENE_TRIGGERS);
+      const picked = sceneKeys[Math.floor(Math.random() * sceneKeys.length)];
+      sceneTrigger = SCENE_TRIGGERS[picked];
+    } else {
+      for (const [key, val] of Object.entries(SCENE_TRIGGERS)) {
+        if (msg.startsWith(key) || msg.includes(key)) { sceneTrigger = val; break; }
+      }
     }
+
     if (sceneTrigger) {
       const sceneMsg = { role: 'system', content: sceneTrigger };
       const apiMessages = [
@@ -998,9 +1007,18 @@ app.post('/api/pencil/chat', auth, async (req, res) => {
       '/车内': '你和宝宝在车里。停在某个僻静的地方，车窗起了雾。空间很小，她的腿没地方放只能盘在你腰上。请详细描写狭小空间里的亲密。400字以上。',
     };
     let pencilSceneTrigger = null;
-    for (const [key, val] of Object.entries(PENCIL_SCENE_TRIGGERS)) {
-      if (msg.startsWith(key) || msg.includes(key)) { pencilSceneTrigger = val; break; }
+
+    // /random: pick a random scene using current mode
+    if (msg === '/random') {
+      const sceneKeys = Object.keys(PENCIL_SCENE_TRIGGERS);
+      const picked = sceneKeys[Math.floor(Math.random() * sceneKeys.length)];
+      pencilSceneTrigger = PENCIL_SCENE_TRIGGERS[picked];
+    } else {
+      for (const [key, val] of Object.entries(PENCIL_SCENE_TRIGGERS)) {
+        if (msg.startsWith(key) || msg.includes(key)) { pencilSceneTrigger = val; break; }
+      }
     }
+
     if (pencilSceneTrigger) {
       const sceneMsg = { role: 'system', content: pencilSceneTrigger };
       const apiMessages = [
