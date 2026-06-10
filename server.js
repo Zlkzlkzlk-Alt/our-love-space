@@ -6,9 +6,24 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3456;
-const DATA_DIR = fs.existsSync('/data') ? '/data' : path.join(__dirname, 'data');
+const APP_DATA_DIR = path.join(__dirname, 'data');
+const VOLUME_DIR = '/data';
+const DATA_DIR = fs.existsSync(VOLUME_DIR) ? VOLUME_DIR : APP_DATA_DIR;
 const PHOTOS_DIR = process.env.PHOTOS_DIR || (fs.existsSync('/data/photos') ? '/data/photos' : path.join(DATA_DIR, 'photos'));
 const SECRET = process.env.AUTH_TOKEN || 'our-little-secret-2025';
+
+// If using a volume, copy static config files from app data dir on first boot
+if (fs.existsSync(VOLUME_DIR) && APP_DATA_DIR !== VOLUME_DIR) {
+  const staticFiles = ['whale_memory.md', 'pencil_memory.md', 'questions.json', 'timeline.json'];
+  staticFiles.forEach(f => {
+    const src = path.join(APP_DATA_DIR, f);
+    const dst = path.join(VOLUME_DIR, f);
+    if (fs.existsSync(src) && !fs.existsSync(dst)) {
+      fs.copyFileSync(src, dst);
+      console.log(`[Init] Copied ${f} to volume`);
+    }
+  });
+}
 
 app.use(cors());
 app.use(express.json({ limit: '200mb' }));
