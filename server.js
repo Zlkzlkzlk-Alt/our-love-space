@@ -946,6 +946,24 @@ app.get('/api/admin/chats/:type/:sessionId', authAdmin, (req, res) => {
   res.json({ sessionId, messages: session });
 });
 
+// Admin: force clear all chat records
+app.post('/api/admin/clear', authAdmin, (req, res) => {
+  const { type } = req.body || {};
+  const cleared = [];
+  if (!type || type === 'whale') {
+    fs.writeFileSync(WHALE_CHAT_FILE, '{}', 'utf-8');
+    whaleSessions.clear();
+    cleared.push('whale');
+  }
+  if (!type || type === 'pencil') {
+    fs.writeFileSync(PENCIL_CHAT_FILE, '{}', 'utf-8');
+    pencilSessions.clear();
+    cleared.push('pencil');
+  }
+  console.log(`[Admin] Cleared chat records: ${cleared.join(', ')}`);
+  res.json({ ok: true, cleared });
+});
+
 // Admin health with record counts
 app.get('/api/admin/stats', authAdmin, (req, res) => {
   const whaleChats = loadWhaleChats();
