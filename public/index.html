@@ -341,25 +341,11 @@ body {
         <button class="whale-send" id="whaleSend">🐳 发送</button>
       </div>
       <div class="quick-triggers" style="margin-bottom:4px;">
-        <button class="quick-trigger" data-msg="/温柔" style="color:#4fc3f7;border-color:rgba(79,195,247,0.3);">💙 温柔</button>
-        <button class="quick-trigger fire" data-msg="/粗暴">🔥 粗暴</button>
+        <button class="quick-trigger whale-mode-btn active" data-mode="gentle" style="color:#4fc3f7;border-color:rgba(79,195,247,0.3);">💙 温柔</button>
+        <button class="quick-trigger whale-mode-btn" data-mode="rough">🔥 粗暴</button>
       </div>
-      <div class="quick-triggers" style="margin-bottom:4px;">
-        <button class="quick-trigger" data-msg="/梦境" style="color:#ce93d8;border-color:rgba(206,147,216,0.3);">🌌 梦境</button>
-        <button class="quick-trigger" data-msg="/床上">🛏️ 床上</button>
-        <button class="quick-trigger" data-msg="/浴室">🚿 浴室</button>
-        <button class="quick-trigger" data-msg="/酒店">🏨 酒店</button>
-        <button class="quick-trigger" data-msg="/公园">🌳 公园</button>
-        <button class="quick-trigger" data-msg="/车内">🚗 车内</button>
-        <button class="quick-trigger" data-msg="/厨房">🍳 厨房</button>
-      </div>
-      <div class="quick-triggers" style="margin-bottom:4px;">
-        <button class="quick-trigger" data-msg="/后入">🍑 后入</button>
-        <button class="quick-trigger" data-msg="/骑乘">🐬 骑乘</button>
-        <button class="quick-trigger" data-msg="/口交">👅 口交</button>
-        <button class="quick-trigger" data-msg="/足交">🦶 足交</button>
-        <button class="quick-trigger" data-msg="/中出">💦 中出</button>
-        <button class="quick-trigger" data-msg="/镜子前">🪞 镜子前</button>
+      <div style="text-align:center;margin:6px 0;">
+        <button id="whaleDreamBtn" style="padding:10px 28px;border-radius:24px;cursor:pointer;font-size:1rem;font-family:inherit;background:linear-gradient(135deg,#7c4dff,#651fff);color:white;border:none;box-shadow:0 4px 16px rgba(124,77,255,0.3);transition:all 0.3s;letter-spacing:0.04em;">🌌 进入梦境</button>
       </div>
       <div style="text-align:center;">
         <button class="whale-reset" id="whaleReset">🫧 重置对话</button>
@@ -384,25 +370,11 @@ body {
         <button class="whale-send" id="pencilSend">✏️ 发送</button>
       </div>
       <div class="quick-triggers" style="margin-bottom:4px;">
-        <button class="quick-trigger" data-msg="/温柔" style="color:#4fc3f7;border-color:rgba(79,195,247,0.3);">💙 温柔</button>
-        <button class="quick-trigger fire" data-msg="/粗暴">🔥 粗暴</button>
+        <button class="quick-trigger pencil-mode-btn active" data-mode="gentle" style="color:#4fc3f7;border-color:rgba(79,195,247,0.3);">💙 温柔</button>
+        <button class="quick-trigger pencil-mode-btn" data-mode="rough">🔥 粗暴</button>
       </div>
-      <div class="quick-triggers" style="margin-bottom:4px;">
-        <button class="quick-trigger" data-msg="/梦境" style="color:#ce93d8;border-color:rgba(206,147,216,0.3);">🌌 梦境</button>
-        <button class="quick-trigger" data-msg="/床上">🛏️ 床上</button>
-        <button class="quick-trigger" data-msg="/浴室">🚿 浴室</button>
-        <button class="quick-trigger" data-msg="/酒店">🏨 酒店</button>
-        <button class="quick-trigger" data-msg="/公园">🌳 公园</button>
-        <button class="quick-trigger" data-msg="/车内">🚗 车内</button>
-        <button class="quick-trigger" data-msg="/厨房">🍳 厨房</button>
-      </div>
-      <div class="quick-triggers" style="margin-bottom:4px;">
-        <button class="quick-trigger" data-msg="/后入">🍑 后入</button>
-        <button class="quick-trigger" data-msg="/骑乘">🐬 骑乘</button>
-        <button class="quick-trigger" data-msg="/口交">👅 口交</button>
-        <button class="quick-trigger" data-msg="/足交">🦶 足交</button>
-        <button class="quick-trigger" data-msg="/中出">💦 中出</button>
-        <button class="quick-trigger" data-msg="/镜子前">🪞 镜子前</button>
+      <div style="text-align:center;margin:6px 0;">
+        <button id="pencilDreamBtn" style="padding:10px 28px;border-radius:24px;cursor:pointer;font-size:1rem;font-family:inherit;background:linear-gradient(135deg,#7c4dff,#651fff);color:white;border:none;box-shadow:0 4px 16px rgba(124,77,255,0.3);transition:all 0.3s;letter-spacing:0.04em;">🌌 进入梦境</button>
       </div>
       <div style="text-align:center;">
         <button class="whale-reset" id="pencilReset">🫧 重置对话</button>
@@ -893,12 +865,26 @@ async function loadCheckinList() {
   sendBtn.addEventListener('click', send);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
-  // Quick trigger buttons
-  document.querySelectorAll('#panel-whale .quick-trigger').forEach(btn => {
+  // Mode selection buttons
+  let whaleMode = 'gentle';
+  document.querySelectorAll('.whale-mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      input.value = btn.dataset.msg;
-      send();
+      document.querySelectorAll('.whale-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      whaleMode = btn.dataset.mode;
+      toast('已选模式：' + (whaleMode === 'gentle' ? '💙 温柔' : '🔥 粗暴'));
     });
+  });
+
+  // Dream button - uses selected mode + random scene
+  document.getElementById('whaleDreamBtn').addEventListener('click', () => {
+    const modeCmd = whaleMode === 'gentle' ? '/温柔' : '/粗暴';
+    const scenes = ['/梦境', '/床上', '/浴室', '/公园', '/酒店', '/后入', '/骑乘', '/口交', '/足交', '/中出', '/厨房', '/沙发', '/镜子前', '/车内'];
+    const scene = scenes[Math.floor(Math.random() * scenes.length)];
+    input.value = modeCmd;
+    send();
+    setTimeout(() => { input.value = scene; send(); }, 3000);
+    toast('🌌 进入梦境：' + (whaleMode === 'gentle' ? '💙温柔' : '🔥粗暴') + ' × ' + scene);
   });
 
   resetBtn.addEventListener('click', async () => {
@@ -952,12 +938,26 @@ async function loadCheckinList() {
   sendBtn.addEventListener('click', send);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
-  // Quick trigger buttons
-  document.querySelectorAll('#panel-pencil .quick-trigger').forEach(btn => {
+  // Mode selection buttons
+  let pencilMode = 'gentle';
+  document.querySelectorAll('.pencil-mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      input.value = btn.dataset.msg;
-      send();
+      document.querySelectorAll('.pencil-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      pencilMode = btn.dataset.mode;
+      toast('已选模式：' + (pencilMode === 'gentle' ? '💙 温柔' : '🔥 粗暴'));
     });
+  });
+
+  // Dream button - uses selected mode + random scene
+  document.getElementById('pencilDreamBtn').addEventListener('click', () => {
+    const modeCmd = pencilMode === 'gentle' ? '/温柔' : '/粗暴';
+    const scenes = ['/梦境', '/床上', '/浴室', '/公园', '/酒店', '/后入', '/骑乘', '/口交', '/足交', '/中出', '/厨房', '/沙发', '/镜子前', '/车内'];
+    const scene = scenes[Math.floor(Math.random() * scenes.length)];
+    input.value = modeCmd;
+    send();
+    setTimeout(() => { input.value = scene; send(); }, 3000);
+    toast('🌌 进入梦境：' + (pencilMode === 'gentle' ? '💙温柔' : '🔥粗暴') + ' × ' + scene);
   });
 
   resetBtn.addEventListener('click', async () => {
