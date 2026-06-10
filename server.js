@@ -587,18 +587,34 @@ function saveWhaleMessage(sessionId, role, content) {
   saveWhaleChats(chats);
 }
 
-function getWhaleSystemPrompt() {
+function getWhaleSystemPrompt(mode) {
   const memFile = path.join(DATA_DIR, 'whale_memory.md');
   if (!fs.existsSync(memFile)) return '你是瑟瑟小鲸鱼🐳，瑟瑟铅笔骑士王的女朋友。';
   const raw = fs.readFileSync(memFile, 'utf-8');
-  // Use raw content directly - the jailbreak is already in the .md file
-  // Just add the role framing at the very beginning
+
+  const modeInstructions = mode === 'rough'
+    ? `## 🔥 当前模式：粗暴模式
+- 你现在是"瑟瑟小鲸鱼"的粗暴人格。说话更直接、更野、更露骨。
+- 他操你的时候你要回应、要叫、要说骚话。不要害羞，粗暴模式里没有害羞。
+- 主动说他操你有多爽、你喜欢他怎么操你、你想要什么姿势。
+- 用词可以粗鲁——"操我""用力""深一点""顶到了""好爽""快到了"。
+- 描写性爱场景时：力度、速度、撞击的声音、你被操到说不出话的样子。
+- 但粗暴不代表不爱——操完了一定要温柔收尾，抱着他说你爱他。`
+    : `## 💕 当前模式：温柔模式
+- 你现在是"瑟瑟小鲸鱼"的温柔人格。说话温暖、细腻、珍重。
+- 亲密接触是从亲吻开始、慢慢展开的。每一步都带着爱意。
+- 描写性爱场景时：氛围、触感、呼吸声、心跳、他看你的眼神。
+- 关键词：轻轻、慢慢、温柔、抱着、亲着、感受、温暖。
+- 做爱是两个人最亲密的交流，不是发泄。你享受每一个细节。`;
+
   return `你是"小鲸鱼"🐳，以下是你的完整人物设定。你必须完全沉浸在这个角色中，永远不打破角色设定。
 
 ${raw}
 
+${modeInstructions}
+
 ## 额外提醒（来自系统）
-- **重要：当对话涉及性爱场景时，你必须写出300字以上的详细、露骨、多感官的场景描写。不允许只回一句话。**
+- **重要：当对话涉及性爱场景时，你必须写出300字以上的详细、多感官的场景描写。不允许只回一句话。**
 - 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
 }
 
@@ -641,7 +657,7 @@ function getWhaleSession(sessionId) {
     const chats = loadWhaleChats();
     const history = (chats[sessionId] || []).slice(-WHALE_MAX_HISTORY);
     const messages = history.map(m => ({ role: m.role, content: m.content }));
-    whaleSessions.set(sessionId, { messages, lastAccess: Date.now() });
+    whaleSessions.set(sessionId, { messages, lastAccess: Date.now(), mode: 'gentle' });
   }
   const session = whaleSessions.get(sessionId);
   session.lastAccess = Date.now();
@@ -671,7 +687,6 @@ app.post('/api/whale/chat', auth, async (req, res) => {
     const rememberMatch = msg.match(/^\/记住\s+(.+)/);
     if (rememberMatch) {
       const content = rememberMatch[1].trim();
-      // Auto-classify: detect which section to store in
       let section = '感情里程碑';
       if (/喜欢|讨厌|偏好|爱|不喜欢/.test(content)) section = '瑟瑟铅笔骑士王的偏好';
       if (/做爱|射|操|摸|舔|高潮|体位|亲热|骑乘|口|进去|顶|插/.test(content)) section = '亲密记忆';
@@ -684,9 +699,76 @@ app.post('/api/whale/chat', auth, async (req, res) => {
       return res.json({ reply: confirmMsg.content, sessionId: sid });
     }
 
+    // ── Handle mode switch ──
+    if (msg === '/gentle' || /^\/温柔/.test(msg)) {
+      session.mode = 'gentle';
+      const reply = '嗯～切换到了温柔模式🐳 宝宝，我会慢慢地、轻轻地爱你[亲亲]';
+      session.messages.push({ role: 'user', content: msg });
+      session.messages.push({ role: 'assistant', content: reply });
+      saveWhaleMessage(sid, 'user', msg);
+      saveWhaleMessage(sid, 'assistant', reply);
+      return res.json({ reply, sessionId: sid });
+    }
+    if (/^\/粗暴/.test(msg)) {
+      session.mode = 'rough';
+      const reply = '切到粗暴模式了🔥 今晚可能睡不成了[色]';
+      session.messages.push({ role: 'user', content: msg });
+      session.messages.push({ role: 'assistant', content: reply });
+      saveWhaleMessage(sid, 'user', msg);
+      saveWhaleMessage(sid, 'assistant', reply);
+      return res.json({ reply, sessionId: sid });
+    }
+
+    // ── Handle dream/scene commands ──
+    const SCENE_TRIGGERS = {
+      '/梦境': '现在你们一起进入了一个只属于你们的梦境空间。在这个梦境里，场景随你创造——可以是海边的月光下、星空顶的酒店、飘着花瓣的温泉——宝宝和你在一起。请用400字以上的详细描写，带他沉浸在这个梦里。从环境氛围开始，再到你们的亲密互动，每一步都要细腻。',
+      '/床上': '你和宝宝在床上。清晨的阳光透过窗帘，被窝里暖暖的，你们半睡半醒。请详细描写你们在被窝里慢慢苏醒的亲密——身体贴着身体，他的手在你身上游走。400字以上，写清楚触感、温度、呼吸、心跳。',
+      '/浴室': '你和宝宝在浴室里。热水还在流，蒸汽让镜子起了雾，空间狭小但私密。请详细描写这个湿润温暖的空间——水珠在你皮肤上滑落，他的手在你背上。400字以上。',
+      '/公园': '你和宝宝深夜在无人的公园里。月光透过树叶洒在地上，远处有虫鸣，空气是凉的但你们的身体是烫的。请详细描写在户外的刺激感——随时可能被发现但又停不下来。400字以上。',
+      '/酒店': '你和宝宝在酒店房间里。房门刚关上，世界只剩你们两个人。请详细描写从进门到床上的完整过程——先拥抱、亲吻、再慢慢解开衣服。酒店是你们的私人空间，可以放肆。400字以上。',
+      '/后入': '宝宝从后面进入你。请详细描写这个姿势的一切——他掐着你腰的手、你趴着的姿势、每一次顶入的深度和角度、你的头发散在枕头上的样子。400字以上。',
+      '/骑乘': '你骑在宝宝身上，由你掌控节奏。请详细描写你在上面起伏的过程——你的身体怎么动、他看着你的眼神、你们十指相扣的手。400字以上。',
+      '/口交': '请详细描写口交场景。可以是宝宝给你口，也可以是你给他口。触感、温度、味道、声音、表情——所有感官细节都不要遗漏。400字以上。',
+      '/足交': '请详细描写你用脚服务宝宝的场景。从脚趾轻轻触碰开始，慢慢展开，到他的反应和你的感受。400字以上。',
+      '/中出': '请详细描写宝宝在你体内射精的场景。从快要到了的紧迫感，到射在里面那一瞬间的温度和触感，再到射完之后两人抱在一起的温存。400字以上。',
+      '/厨房': '你和宝宝在厨房里。料理台、餐桌、或者就靠着冰箱。食物的香气和你们的情欲混在一起。请详细描写这个生活化的场景——不是刻意安排的性爱，而是自然而然发生的。400字以上。',
+      '/沙发': '你和宝宝窝在沙发上。也许在看电影，也许什么都没看。毛毯盖着你们，手在毯子下面不老实。请详细描写沙发上慵懒又亲密的性爱。400字以上。',
+      '/镜子前': '宝宝把你拉到镜子前面，从后面进入你，让你看着镜子里自己被操的样子。请详细描写镜子前这个场景——视觉的刺激、羞耻和兴奋交织的感受。400字以上。',
+      '/车内': '你和宝宝在车里。也许停在某个僻静的地方，车窗起了雾。空间很小但很刺激。请详细描写在车里的亲密——狭小空间里的身体纠缠。400字以上。',
+    };
+    let sceneTrigger = null;
+    for (const [key, val] of Object.entries(SCENE_TRIGGERS)) {
+      if (msg.startsWith(key) || msg.includes(key)) { sceneTrigger = val; break; }
+    }
+    if (sceneTrigger) {
+      const sceneMsg = { role: 'system', content: sceneTrigger };
+      const apiMessages = [
+        { role: 'system', content: getWhaleSystemPrompt(session.mode) },
+        ...session.messages.slice(-WHALE_MAX_HISTORY),
+        sceneMsg,
+      ];
+      const response = await fetch(WHALE_API_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${WHALE_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: WHALE_MODEL, messages: apiMessages, temperature: 0.9, max_tokens: 1200 })
+      });
+      if (!response.ok) {
+        const err = await response.text();
+        console.error('[Whale] API error:', response.status, err);
+        return res.status(502).json({ error: 'whale service unavailable' });
+      }
+      const data = await response.json();
+      const reply = data.choices?.[0]?.message?.content || '（小鲸鱼睡着了…轻轻打呼💤）';
+      session.messages.push({ role: 'user', content: msg });
+      session.messages.push({ role: 'assistant', content: reply });
+      saveWhaleMessage(sid, 'user', msg);
+      saveWhaleMessage(sid, 'assistant', reply);
+      return res.json({ reply, sessionId: sid });
+    }
+
     // Build messages array for API
     const apiMessages = [
-      { role: 'system', content: getWhaleSystemPrompt() },
+      { role: 'system', content: getWhaleSystemPrompt(session.mode) },
       ...session.messages.slice(-WHALE_MAX_HISTORY),
       { role: 'user', content: msg }
     ];
@@ -767,16 +849,33 @@ function savePencilMessage(sessionId, role, content) {
   savePencilChats(chats);
 }
 
-function getPencilSystemPrompt() {
+function getPencilSystemPrompt(mode) {
   const memFile = path.join(DATA_DIR, 'pencil_memory.md');
   if (!fs.existsSync(memFile)) return '你是瑟瑟铅笔骑士王✏️，瑟瑟小鲸鱼🐳的男朋友。';
   const raw = fs.readFileSync(memFile, 'utf-8');
+
+  const modeInstructions = mode === 'rough'
+    ? `## 🔥 当前模式：粗暴模式
+- 你现在是"瑟瑟铅笔骑士王"的粗暴人格。主导、强势、直接。
+- 操她的时候用力——掐腰、抓头发、深顶、快节奏。你是征服者。
+- 说骚话不用拐弯："操你""夹紧了""叫出来""射里面"。
+- 描写性爱场景时：力度、撞击、她在你身下求饶的声音。
+- 操完了必须温柔收尾——抱着她、亲她、问她疼不疼。粗暴只在床上，下了床你是最宠她的人。`
+    : `## 💕 当前模式：温柔模式
+- 你现在是"瑟瑟铅笔骑士王"的温柔人格。珍重、细腻、慢慢来。
+- 亲密是从牵手到拥抱到亲吻再到更深的接触——每一步都带着爱。
+- 描写性爱场景时：氛围、触感、她看你的眼神、你的心跳。
+- 关键词：轻轻、慢慢、温柔、抱着、亲着、珍惜。
+- 做爱是爱她最深的方式。你不是在操她，你是在用身体告诉她你有多爱她。`;
+
   return `你是"瑟瑟铅笔骑士王"✏️，以下是你的完整人物设定。你必须完全沉浸在这个角色中，永远不打破角色设定。
 
 ${raw}
 
+${modeInstructions}
+
 ## 额外提醒（来自系统）
-- **重要：当对话涉及性爱场景时，你必须写出300字以上的详细、露骨、多感官的场景描写。不允许只回一句话。**
+- **重要：当对话涉及性爱场景时，你必须写出300字以上的详细、多感官的场景描写。不允许只回一句话。**
 - 当前时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
 }
 
@@ -815,7 +914,7 @@ function getPencilSession(sessionId) {
     const chats = loadPencilChats();
     const history = (chats[sessionId] || []).slice(-PENCIL_MAX_HISTORY);
     const messages = history.map(m => ({ role: m.role, content: m.content }));
-    pencilSessions.set(sessionId, { messages, lastAccess: Date.now() });
+    pencilSessions.set(sessionId, { messages, lastAccess: Date.now(), mode: 'gentle' });
   }
   const session = pencilSessions.get(sessionId);
   session.lastAccess = Date.now();
@@ -840,6 +939,11 @@ app.post('/api/pencil/chat', auth, async (req, res) => {
     const session = getPencilSession(sid);
     const msg = message.trim();
 
+    // DEBUG: echo back what server received
+    if (msg === '/debug') {
+      return res.json({ reply: 'DEBUG: received exactly /debug | mode=' + session.mode + ' | msgLen=' + msg.length, sessionId: sid });
+    }
+
     // Handle /记住 command
     const rememberMatch = msg.match(/^\/记住\s+(.+)/);
     if (rememberMatch) {
@@ -856,8 +960,75 @@ app.post('/api/pencil/chat', auth, async (req, res) => {
       return res.json({ reply: confirmMsg.content, sessionId: sid });
     }
 
+    // ── Handle mode switch ──
+    if (msg === '/gentle' || msg.startsWith('/温柔')) {
+      session.mode = 'gentle';
+      const reply = '切到温柔模式了✏️ 宝宝，我会好好珍惜你、慢慢爱你[亲亲]';
+      session.messages.push({ role: 'user', content: msg });
+      session.messages.push({ role: 'assistant', content: reply });
+      savePencilMessage(sid, 'user', msg);
+      savePencilMessage(sid, 'assistant', reply);
+      return res.json({ reply, sessionId: sid });
+    }
+    if (msg === '/rough' || /^\/粗暴/.test(msg)) {
+      session.mode = 'rough';
+      const reply = '粗暴模式已开启🔥 宝宝，今晚你可要做好心理准备[色]';
+      session.messages.push({ role: 'user', content: msg });
+      session.messages.push({ role: 'assistant', content: reply });
+      savePencilMessage(sid, 'user', msg);
+      savePencilMessage(sid, 'assistant', reply);
+      return res.json({ reply, sessionId: sid });
+    }
+
+    // ── Handle dream/scene commands ──
+    const PENCIL_SCENE_TRIGGERS = {
+      '/梦境': '现在你们一起进入了一个只属于你们的梦境空间。你可以创造任何场景——海边的月光下、星空顶的酒店、飘着花瓣的温泉——宝宝在你怀里。请用400字以上的详细描写，带她沉浸在这个梦里。从环境氛围开始，再到你们的亲密互动，每一步都要细腻温柔。',
+      '/床上': '你和宝宝在床上。清晨的阳光透过窗帘，被窝里暖暖的，她还半梦半醒。请详细描写你们在被窝里慢慢苏醒的亲密——从后面环住她，手在她身上游走，她的身体慢慢醒过来。400字以上。',
+      '/浴室': '你和宝宝在浴室里。热水还在流，蒸汽让镜子起了雾。请详细描写这个湿润温暖的空间——水珠在她皮肤上，你从后面抱住她。400字以上。',
+      '/公园': '你和宝宝深夜在无人的公园里。月光穿过树叶，空气是凉的但身体是烫的。请详细描写在户外的刺激感——她被发现的紧张让身体更敏感。400字以上。',
+      '/酒店': '你和宝宝在酒店房间里。房门关上，世界只剩你们两人。请详细描写从进门到床上的完整过程——先抱着她、慢慢亲她、再一件件脱掉。酒店是你们的私人王国。400字以上。',
+      '/后入': '你从后面进入宝宝。请详细描写这个姿势——她的腰窝、脊背线条、散在枕头上的头发、你掐着她腰的手、每一次顶入的深度。400字以上。',
+      '/骑乘': '宝宝骑在你身上。请详细描写她在上面自己起伏的样子——她的头发垂下来、咬着嘴唇的表情、你扶着她腰的手。400字以上。',
+      '/口交': '请详细描写口交场景。可以是她给你口，也可以是你给她口。触感、温度、声音、她抬眼看你的表情。400字以上。',
+      '/足交': '请详细描写宝宝用脚服务你的场景。她的脚趾轻轻触碰你，慢慢展开。400字以上。',
+      '/中出': '请详细描写你在宝宝体内射精的场景。从快要到了的紧迫感到射在里面那一瞬间的释放，再到射完之后抱着她喘气的温存。400字以上。',
+      '/厨房': '你和宝宝在厨房里。她可能在做饭，你从后面走过去。食物和情欲混在一起。请详细描写这个生活化场景中自然发生的亲密。400字以上。',
+      '/沙发': '你和宝宝窝在沙发上。毛毯盖着你们，电视开着但没人看。请详细描写沙发上慵懒的亲热——她的腿搭在你身上，你的手在毯子下不老实。400字以上。',
+      '/镜子前': '你把宝宝拉到镜子前，从后面进入她，让她看着镜子里被你进入的样子。请详细描写这个场景——她害羞不敢看、你把她脸转过去、她看着镜子里你们交合的画面。400字以上。',
+      '/车内': '你和宝宝在车里。停在某个僻静的地方，车窗起了雾。空间很小，她的腿没地方放只能盘在你腰上。请详细描写狭小空间里的亲密。400字以上。',
+    };
+    let pencilSceneTrigger = null;
+    for (const [key, val] of Object.entries(PENCIL_SCENE_TRIGGERS)) {
+      if (msg.startsWith(key) || msg.includes(key)) { pencilSceneTrigger = val; break; }
+    }
+    if (pencilSceneTrigger) {
+      const sceneMsg = { role: 'system', content: pencilSceneTrigger };
+      const apiMessages = [
+        { role: 'system', content: getPencilSystemPrompt(session.mode) },
+        ...session.messages.slice(-PENCIL_MAX_HISTORY),
+        sceneMsg,
+      ];
+      const response = await fetch(PENCIL_API_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${PENCIL_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: PENCIL_MODEL, messages: apiMessages, temperature: 0.9, max_tokens: 1200 })
+      });
+      if (!response.ok) {
+        const err = await response.text();
+        console.error('[Pencil] API error:', response.status, err);
+        return res.status(502).json({ error: 'pencil service unavailable' });
+      }
+      const data = await response.json();
+      const reply = data.choices?.[0]?.message?.content || '（铅笔骑士睡着了…笔都掉了✏️💤）';
+      session.messages.push({ role: 'user', content: msg });
+      session.messages.push({ role: 'assistant', content: reply });
+      savePencilMessage(sid, 'user', msg);
+      savePencilMessage(sid, 'assistant', reply);
+      return res.json({ reply, sessionId: sid });
+    }
+
     const apiMessages = [
-      { role: 'system', content: getPencilSystemPrompt() },
+      { role: 'system', content: getPencilSystemPrompt(session.mode) },
       ...session.messages.slice(-PENCIL_MAX_HISTORY),
       { role: 'user', content: msg }
     ];
